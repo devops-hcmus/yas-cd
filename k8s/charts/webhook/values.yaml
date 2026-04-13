@@ -1,7 +1,7 @@
 backend:
   image:
     repository: danzgne/yas-webhook
-    tag: latest
+    tag: main
 
   nameOverride: webhook
   fullnameOverride: webhook

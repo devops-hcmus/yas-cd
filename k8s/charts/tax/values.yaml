@@ -1,7 +1,7 @@
 backend:
   image:
     repository: danzgne/yas-tax
-    tag: latest
+    tag: main
 
   nameOverride: tax
   fullnameOverride: tax

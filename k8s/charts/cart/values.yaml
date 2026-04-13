@@ -1,7 +1,7 @@
 backend:
   image:
     repository: danzgne/yas-cart
-    tag: latest
+    tag: main
 
   nameOverride: cart
   fullnameOverride: cart

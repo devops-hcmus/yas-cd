@@ -1,7 +1,7 @@
 backend:
   image:
     repository: danzgne/yas-promotion
-    tag: latest
+    tag: main
 
   nameOverride: promotion
   fullnameOverride: promotion

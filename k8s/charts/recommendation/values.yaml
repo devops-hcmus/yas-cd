@@ -1,7 +1,7 @@
 backend:
   image:
     repository: danzgne/yas-recommendation
-    tag: latest
+    tag: main
 
   nameOverride: recommendation
   fullnameOverride: recommendation

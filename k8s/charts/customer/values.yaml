@@ -1,7 +1,7 @@
 backend:
   image:
     repository: danzgne/yas-customer
-    tag: latest
+    tag: main
 
   nameOverride: customer
   fullnameOverride: customer

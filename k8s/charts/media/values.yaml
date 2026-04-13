@@ -1,7 +1,7 @@
 backend:
   image:
     repository: danzgne/yas-media
-    tag: latest
+    tag: main
 
   nameOverride: media
   fullnameOverride: media
