@@ -1,7 +1,7 @@
 backend:
   image:
     repository: danzgne/yas-product
-    tag: latest
+    tag: main
 
   nameOverride: product
   fullnameOverride: product

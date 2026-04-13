@@ -1,7 +1,7 @@
 backend:
   image:
     repository: danzgne/yas-storefront-bff
-    tag: latest
+    tag: main
 
   nameOverride: storefront-bff
   fullnameOverride: storefront-bff

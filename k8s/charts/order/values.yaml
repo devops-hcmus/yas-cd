@@ -1,7 +1,7 @@
 backend:
   image:
     repository: danzgne/yas-order
-    tag: latest
+    tag: main
 
   nameOverride: order
   fullnameOverride: order

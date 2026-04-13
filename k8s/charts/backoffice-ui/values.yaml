@@ -1,7 +1,7 @@
 ui:
   image:
     repository: danzgne/yas-backoffice
-    tag: latest
+    tag: main
   nameOverride: backoffice-ui
   fullnameOverride: backoffice-ui
   ingress:

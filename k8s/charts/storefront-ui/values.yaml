@@ -1,7 +1,7 @@
 ui:
   image:
     repository: danzgne/yas-storefront
-    tag: latest
+    tag: main
   nameOverride: storefront-ui
   fullnameOverride: storefront-ui
 #  extraVolumes:

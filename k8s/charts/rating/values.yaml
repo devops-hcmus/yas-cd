@@ -1,7 +1,7 @@
 backend:
   image:
     repository: danzgne/yas-rating
-    tag: latest
+    tag: main
 
   nameOverride: rating
   fullnameOverride: rating
