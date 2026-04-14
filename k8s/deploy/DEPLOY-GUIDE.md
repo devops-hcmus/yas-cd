@@ -111,7 +111,18 @@ Kiểm tra:
 kubectl get pods -n yas -w
 ```
 
-## Bước 8 — Cấu hình /etc/hosts
+## Bước 8 — Deploy nginx API Gateway
+
+Storefront-BFF và Backoffice-BFF đều route `/api/**` đến service tên `nginx` trong namespace `yas`. Docker Compose dùng container `nginx` tích hợp sẵn, nhưng trong K8s cần deploy thủ công:
+
+```shell
+kubectl apply -f nginx-api-gateway.yaml
+kubectl rollout status deployment/nginx -n yas
+```
+
+> **Lưu ý:** Bước này phải chạy **sau** bước 7 vì namespace `yas` phải tồn tại trước.
+
+## Bước 9 — Cấu hình /etc/hosts
 
 Lấy IP của Minikube:
 ```shell
@@ -190,7 +201,7 @@ minikube addons enable ingress
 # Tất cả namespaces
 kubectl get pods -A | grep -v Running | grep -v Completed
 
-# Namespace yas
+# Namespace yas (bao gồm nginx)
 kubectl get pods -n yas
 
 # Ingress
