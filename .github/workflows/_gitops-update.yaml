@@ -1,0 +1,54 @@
+name: GitOps Update (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      service:
+        description: "Helm chart / gitops cluster folder name (e.g. product, backoffice-ui)"
+        required: true
+        type: string
+      env:
+        description: "Target environment: dev or staging"
+        required: true
+        type: string
+      tag:
+        description: "Image tag to write into values.yaml"
+        required: true
+        type: string
+      values-key:
+        description: "Top-level Helm values key: backend (Java services) or ui (frontend services)"
+        required: false
+        type: string
+        default: "backend"
+    secrets:
+      gitops_pat:
+        required: true
+
+jobs:
+  update-gitops:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install yq
+        uses: mikefarah/yq@v4.44.1
+
+      - name: Checkout gitops repo
+        uses: actions/checkout@v4
+        with:
+          repository: devops-hcmus/gitops
+          token: ${{ secrets.gitops_pat }}
+          path: gitops
+
+      - name: Update image tag
+        run: |
+          yq e ".${{ inputs.values-key }}.image.tag = \"${{ inputs.tag }}\"" \
+            -i gitops/clusters/${{ inputs.env }}/${{ inputs.service }}/values.yaml
+
+      - name: Commit and push
+        run: |
+          cd gitops
+          git config user.name "ci-bot"
+          git config user.email "ci-bot@devops-hcmus.com"
+          git add clusters/${{ inputs.env }}/${{ inputs.service }}/values.yaml
+          git diff --staged --quiet || \
+            git commit -m "chore(${{ inputs.service }}): ${{ inputs.env }} -> ${{ inputs.tag }}"
+          git push
