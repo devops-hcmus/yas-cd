@@ -14,6 +14,15 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
+# Add host aliases to pod /etc/hosts so services can resolve cluster-internal domains
+hostAliases:
+  - ip: "10.96.53.112"  # ingress-nginx-controller ClusterIP
+    hostnames:
+      - "identity.yas.local.com"
+      - "backoffice.yas.local.com"
+      - "storefront.yas.local.com"
+      - "api.yas.local.com"
+
 serviceAccount:
   # Specifies whether a service account should be created
   create: true
