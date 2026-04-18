@@ -94,5 +94,23 @@ spec:
         plugin: wal2json
   allowedSourceRanges:
   # IP ranges to access your cluster go here
+  initContainers:
+    - name: remove-stale-pid
+      image: busybox
+      command:
+        - sh
+        - -c
+        - |
+          PID_FILE=/home/postgres/pgdata/pgroot/data/postmaster.pid
+          if [ -f "$PID_FILE" ]; then
+            echo "Found stale postmaster.pid, removing..."
+            rm -f "$PID_FILE"
+            echo "Done."
+          else
+            echo "No stale postmaster.pid found."
+          fi
+      volumeMounts:
+        - name: pgdata
+          mountPath: /home/postgres/pgdata
   resources:
     {{ toYaml .Values.resources | nindent 4 }}
