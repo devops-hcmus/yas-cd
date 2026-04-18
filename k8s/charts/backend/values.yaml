@@ -83,6 +83,8 @@ extraVolumes: []
 #    configMap:
 #      name: example-extra-configmap
 
+initContainers: []
+
 extraVolumeMounts: []
 #  - mountPath: /example-path
 #    name: volume-extra-example

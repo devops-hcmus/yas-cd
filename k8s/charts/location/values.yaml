@@ -8,3 +8,19 @@ backend:
   databaseName: location
   ingress:
     enabled: false
+
+  initContainers:
+    - name: clear-liquibase-lock
+      image: postgres:alpine
+      command:
+        - sh
+        - -c
+        - |
+          PGPASSWORD="$POSTGRESQL_PASSWORD" psql \
+            -h postgresql.postgres \
+            -U "$POSTGRESQL_USERNAME" \
+            -d location \
+            -c "UPDATE databasechangeloglock SET locked = false, lockgranted = NULL, lockedby = NULL WHERE id = 1;"
+      envFrom:
+        - secretRef:
+            name: yas-postgresql-credentials-secret
