@@ -11,8 +11,6 @@ on:
 
 jobs:
   Build:
-    outputs:
-      image-tag: ${{ steps.meta.outputs.version }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -38,14 +36,4 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
 
-  update-gitops:
-    needs: Build
-    if: github.ref == 'refs/heads/main'
-    uses: ./.github/workflows/_gitops-update.yaml
-    with:
-      service: payment-paypal
-      env: dev
-      tag: ${{ needs.Build.outputs.image-tag }}
-      values-key: backend
-    secrets:
-      gitops_pat: ${{ secrets.GITOPS_PAT }}
+
