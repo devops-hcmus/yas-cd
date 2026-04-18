@@ -51,4 +51,8 @@ jobs:
           git add clusters/${{ inputs.env }}/${{ inputs.service }}/values.yaml
           git diff --staged --quiet || \
             git commit -m "chore(${{ inputs.service }}): ${{ inputs.env }} -> ${{ inputs.tag }}"
-          git push
+          for i in 1 2 3 4 5; do
+            git pull --rebase && git push && break
+            echo "Push attempt $i failed, retrying in 5s..."
+            sleep 5
+          done
