@@ -235,28 +235,108 @@ jobs:
         run: |
           kubectl get namespace ${{ env.TARGET_NAMESPACE }} || kubectl create namespace ${{ env.TARGET_NAMESPACE }}
 
-      - name: Deploy Services via Rolling Update
+      - name: Deploy Services via Helm
         run: |
-          kubectl set image deployment/cart cart=${{ secrets.DOCKERHUB_USERNAME }}/yas-cart:${{ needs.get-commit-ids.outputs.cart_tag }} -n ${{ env.TARGET_NAMESPACE }} --record || true
-          kubectl set image deployment/customer customer=${{ secrets.DOCKERHUB_USERNAME }}/yas-customer:${{ needs.get-commit-ids.outputs.customer_tag }} -n ${{ env.TARGET_NAMESPACE }} --record || true
-          kubectl set image deployment/inventory inventory=${{ secrets.DOCKERHUB_USERNAME }}/yas-inventory:${{ needs.get-commit-ids.outputs.inventory_tag }} -n ${{ env.TARGET_NAMESPACE }} --record || true
-          kubectl set image deployment/location location=${{ secrets.DOCKERHUB_USERNAME }}/yas-location:${{ needs.get-commit-ids.outputs.location_tag }} -n ${{ env.TARGET_NAMESPACE }} --record || true
-          kubectl set image deployment/media media=${{ secrets.DOCKERHUB_USERNAME }}/yas-media:${{ needs.get-commit-ids.outputs.media_tag }} -n ${{ env.TARGET_NAMESPACE }} --record || true
-          kubectl set image deployment/order order=${{ secrets.DOCKERHUB_USERNAME }}/yas-order:${{ needs.get-commit-ids.outputs.order_tag }} -n ${{ env.TARGET_NAMESPACE }} --record || true
-          kubectl set image deployment/payment payment=${{ secrets.DOCKERHUB_USERNAME }}/yas-payment:${{ needs.get-commit-ids.outputs.payment_tag }} -n ${{ env.TARGET_NAMESPACE }} --record || true
-          kubectl set image deployment/payment-paypal payment-paypal=${{ secrets.DOCKERHUB_USERNAME }}/yas-payment-paypal:${{ needs.get-commit-ids.outputs.payment_paypal_tag }} -n ${{ env.TARGET_NAMESPACE }} --record || true
-          kubectl set image deployment/product product=${{ secrets.DOCKERHUB_USERNAME }}/yas-product:${{ needs.get-commit-ids.outputs.product_tag }} -n ${{ env.TARGET_NAMESPACE }} --record || true
-          kubectl set image deployment/promotion promotion=${{ secrets.DOCKERHUB_USERNAME }}/yas-promotion:${{ needs.get-commit-ids.outputs.promotion_tag }} -n ${{ env.TARGET_NAMESPACE }} --record || true
-          kubectl set image deployment/rating rating=${{ secrets.DOCKERHUB_USERNAME }}/yas-rating:${{ needs.get-commit-ids.outputs.rating_tag }} -n ${{ env.TARGET_NAMESPACE }} --record || true
-          kubectl set image deployment/recommendation recommendation=${{ secrets.DOCKERHUB_USERNAME }}/yas-recommendation:${{ needs.get-commit-ids.outputs.recommendation_tag }} -n ${{ env.TARGET_NAMESPACE }} --record || true
-          kubectl set image deployment/search search=${{ secrets.DOCKERHUB_USERNAME }}/yas-search:${{ needs.get-commit-ids.outputs.search_tag }} -n ${{ env.TARGET_NAMESPACE }} --record || true
-          kubectl set image deployment/tax tax=${{ secrets.DOCKERHUB_USERNAME }}/yas-tax:${{ needs.get-commit-ids.outputs.tax_tag }} -n ${{ env.TARGET_NAMESPACE }} --record || true
-          kubectl set image deployment/webhook webhook=${{ secrets.DOCKERHUB_USERNAME }}/yas-webhook:${{ needs.get-commit-ids.outputs.webhook_tag }} -n ${{ env.TARGET_NAMESPACE }} --record || true
-          kubectl set image deployment/backoffice-bff backoffice-bff=${{ secrets.DOCKERHUB_USERNAME }}/yas-backoffice-bff:${{ needs.get-commit-ids.outputs.backoffice_bff_tag }} -n ${{ env.TARGET_NAMESPACE }} --record || true
-          kubectl set image deployment/storefront-bff storefront-bff=${{ secrets.DOCKERHUB_USERNAME }}/yas-storefront-bff:${{ needs.get-commit-ids.outputs.storefront_bff_tag }} -n ${{ env.TARGET_NAMESPACE }} --record || true
-          kubectl set image deployment/storefront storefront=${{ secrets.DOCKERHUB_USERNAME }}/yas-storefront:${{ needs.get-commit-ids.outputs.storefront_tag }} -n ${{ env.TARGET_NAMESPACE }} --record || true
-          kubectl set image deployment/backoffice backoffice=${{ secrets.DOCKERHUB_USERNAME }}/yas-backoffice:${{ needs.get-commit-ids.outputs.backoffice_tag }} -n ${{ env.TARGET_NAMESPACE }} --record || true
-          kubectl set image deployment/sampledata sampledata=${{ secrets.DOCKERHUB_USERNAME }}/yas-sampledata:${{ needs.get-commit-ids.outputs.sampledata_tag }} -n ${{ env.TARGET_NAMESPACE }} --record || true
+          # Deploy backend services with custom image tags
+          helm upgrade --install cart k8s/charts/cart \
+            --namespace ${{ env.TARGET_NAMESPACE }} \
+            --set backend.image.repository=${{ secrets.DOCKERHUB_USERNAME }}/yas-cart \
+            --set backend.image.tag=${{ needs.get-commit-ids.outputs.cart_tag }} || true
+          
+          helm upgrade --install customer k8s/charts/customer \
+            --namespace ${{ env.TARGET_NAMESPACE }} \
+            --set backend.image.repository=${{ secrets.DOCKERHUB_USERNAME }}/yas-customer \
+            --set backend.image.tag=${{ needs.get-commit-ids.outputs.customer_tag }} || true
+          
+          helm upgrade --install inventory k8s/charts/inventory \
+            --namespace ${{ env.TARGET_NAMESPACE }} \
+            --set backend.image.repository=${{ secrets.DOCKERHUB_USERNAME }}/yas-inventory \
+            --set backend.image.tag=${{ needs.get-commit-ids.outputs.inventory_tag }} || true
+          
+          helm upgrade --install location k8s/charts/location \
+            --namespace ${{ env.TARGET_NAMESPACE }} \
+            --set backend.image.repository=${{ secrets.DOCKERHUB_USERNAME }}/yas-location \
+            --set backend.image.tag=${{ needs.get-commit-ids.outputs.location_tag }} || true
+          
+          helm upgrade --install media k8s/charts/media \
+            --namespace ${{ env.TARGET_NAMESPACE }} \
+            --set backend.image.repository=${{ secrets.DOCKERHUB_USERNAME }}/yas-media \
+            --set backend.image.tag=${{ needs.get-commit-ids.outputs.media_tag }} || true
+          
+          helm upgrade --install order k8s/charts/order \
+            --namespace ${{ env.TARGET_NAMESPACE }} \
+            --set backend.image.repository=${{ secrets.DOCKERHUB_USERNAME }}/yas-order \
+            --set backend.image.tag=${{ needs.get-commit-ids.outputs.order_tag }} || true
+          
+          helm upgrade --install payment k8s/charts/payment \
+            --namespace ${{ env.TARGET_NAMESPACE }} \
+            --set backend.image.repository=${{ secrets.DOCKERHUB_USERNAME }}/yas-payment \
+            --set backend.image.tag=${{ needs.get-commit-ids.outputs.payment_tag }} || true
+          
+          helm upgrade --install payment-paypal k8s/charts/payment-paypal \
+            --namespace ${{ env.TARGET_NAMESPACE }} \
+            --set backend.image.repository=${{ secrets.DOCKERHUB_USERNAME }}/yas-payment-paypal \
+            --set backend.image.tag=${{ needs.get-commit-ids.outputs.payment_paypal_tag }} || true
+          
+          helm upgrade --install product k8s/charts/product \
+            --namespace ${{ env.TARGET_NAMESPACE }} \
+            --set backend.image.repository=${{ secrets.DOCKERHUB_USERNAME }}/yas-product \
+            --set backend.image.tag=${{ needs.get-commit-ids.outputs.product_tag }} || true
+          
+          helm upgrade --install promotion k8s/charts/promotion \
+            --namespace ${{ env.TARGET_NAMESPACE }} \
+            --set backend.image.repository=${{ secrets.DOCKERHUB_USERNAME }}/yas-promotion \
+            --set backend.image.tag=${{ needs.get-commit-ids.outputs.promotion_tag }} || true
+          
+          helm upgrade --install rating k8s/charts/rating \
+            --namespace ${{ env.TARGET_NAMESPACE }} \
+            --set backend.image.repository=${{ secrets.DOCKERHUB_USERNAME }}/yas-rating \
+            --set backend.image.tag=${{ needs.get-commit-ids.outputs.rating_tag }} || true
+          
+          helm upgrade --install recommendation k8s/charts/recommendation \
+            --namespace ${{ env.TARGET_NAMESPACE }} \
+            --set backend.image.repository=${{ secrets.DOCKERHUB_USERNAME }}/yas-recommendation \
+            --set backend.image.tag=${{ needs.get-commit-ids.outputs.recommendation_tag }} || true
+          
+          helm upgrade --install search k8s/charts/search \
+            --namespace ${{ env.TARGET_NAMESPACE }} \
+            --set backend.image.repository=${{ secrets.DOCKERHUB_USERNAME }}/yas-search \
+            --set backend.image.tag=${{ needs.get-commit-ids.outputs.search_tag }} || true
+          
+          helm upgrade --install tax k8s/charts/tax \
+            --namespace ${{ env.TARGET_NAMESPACE }} \
+            --set backend.image.repository=${{ secrets.DOCKERHUB_USERNAME }}/yas-tax \
+            --set backend.image.tag=${{ needs.get-commit-ids.outputs.tax_tag }} || true
+          
+          helm upgrade --install webhook k8s/charts/webhook \
+            --namespace ${{ env.TARGET_NAMESPACE }} \
+            --set backend.image.repository=${{ secrets.DOCKERHUB_USERNAME }}/yas-webhook \
+            --set backend.image.tag=${{ needs.get-commit-ids.outputs.webhook_tag }} || true
+          
+          helm upgrade --install backoffice-bff k8s/charts/backoffice-bff \
+            --namespace ${{ env.TARGET_NAMESPACE }} \
+            --set backend.image.repository=${{ secrets.DOCKERHUB_USERNAME }}/yas-backoffice-bff \
+            --set backend.image.tag=${{ needs.get-commit-ids.outputs.backoffice_bff_tag }} || true
+          
+          helm upgrade --install storefront-bff k8s/charts/storefront-bff \
+            --namespace ${{ env.TARGET_NAMESPACE }} \
+            --set backend.image.repository=${{ secrets.DOCKERHUB_USERNAME }}/yas-storefront-bff \
+            --set backend.image.tag=${{ needs.get-commit-ids.outputs.storefront_bff_tag }} || true
+          
+          helm upgrade --install storefront-ui k8s/charts/storefront-ui \
+            --namespace ${{ env.TARGET_NAMESPACE }} \
+            --set ui.image.repository=${{ secrets.DOCKERHUB_USERNAME }}/yas-storefront \
+            --set ui.image.tag=${{ needs.get-commit-ids.outputs.storefront_tag }} || true
+          
+          helm upgrade --install backoffice-ui k8s/charts/backoffice-ui \
+            --namespace ${{ env.TARGET_NAMESPACE }} \
+            --set ui.image.repository=${{ secrets.DOCKERHUB_USERNAME }}/yas-backoffice \
+            --set ui.image.tag=${{ needs.get-commit-ids.outputs.backoffice_tag }} || true
+          
+          helm upgrade --install sampledata k8s/charts/sampledata \
+            --namespace ${{ env.TARGET_NAMESPACE }} \
+            --set backend.image.repository=${{ secrets.DOCKERHUB_USERNAME }}/yas-sampledata \
+            --set backend.image.tag=${{ needs.get-commit-ids.outputs.sampledata_tag }} || true
 
       - name: Wait for Rollout Status
         run: |
