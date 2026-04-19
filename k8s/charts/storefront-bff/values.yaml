@@ -6,6 +6,19 @@ backend:
   nameOverride: storefront-bff
   fullnameOverride: storefront-bff
 
+  initContainers:
+    - name: wait-for-keycloak
+      image: busybox:stable
+      command:
+        - sh
+        - -c
+        - |
+          echo "Waiting for Keycloak at identity.yas.local.com..."
+          until wget -qO- http://identity.yas.local.com/realms/Yas 2>/dev/null | grep -q realm_name; do
+            echo "Keycloak not ready, retrying in 5s..."; sleep 5;
+          done
+          echo "Keycloak is ready"
+
   deployment:
     annotations:
       configmap.reloader.stakater.com/reload: "yas-gateway-routes-config-configmap,storefront-bff-extra-configmap"
