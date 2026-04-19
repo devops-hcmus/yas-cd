@@ -65,10 +65,12 @@ applicationConfig:
       username: ${POSTGRESQL_USERNAME}
       password: ${POSTGRESQL_PASSWORD}
       hikari:
-        maximum-pool-size: 5
-        minimum-idle: 1
+        maximum-pool-size: 3
+        minimum-idle: 0
         initialization-fail-timeout: -1
         connection-timeout: 30000
+        idle-timeout: 30000
+        max-lifetime: 60000
     kafka:
       bootstrap-servers: kafka-cluster-kafka-brokers.kafka:9092
       consumer:
