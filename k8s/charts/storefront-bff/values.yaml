@@ -14,7 +14,7 @@ backend:
         - -c
         - |
           echo "Waiting for Keycloak at identity.yas.local.com..."
-          until wget -qO- http://identity.yas.local.com/realms/Yas 2>/dev/null | grep -q realm_name; do
+          until wget -qO- http://identity.yas.local.com/realms/Yas 2>/dev/null | grep -q '"realm"'; do
             echo "Keycloak not ready, retrying in 5s..."; sleep 5;
           done
           echo "Keycloak is ready"
