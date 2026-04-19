@@ -83,7 +83,13 @@ extraVolumes: []
 #    configMap:
 #      name: example-extra-configmap
 
-initContainers: []
+initContainers:
+  - name: wait-for-postgres
+    image: busybox:stable
+    command:
+      - sh
+      - -c
+      - until nc -z postgresql.postgres 5432; do echo "Waiting for postgres..."; sleep 3; done; echo "Postgres is ready"
 
 extraVolumeMounts: []
 #  - mountPath: /example-path
