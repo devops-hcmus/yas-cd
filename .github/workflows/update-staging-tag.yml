@@ -1,0 +1,52 @@
+name: Update Staging Tag in GitOps
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  update-gitops:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Extract tag name
+        id: tag
+        run: echo "TAG=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout gitops repo
+        uses: actions/checkout@v4
+        with:
+          repository: devops-hcmus/gitops
+          token: ${{ secrets.GITOPS_PAT }}
+          ref: main
+
+      - name: Update staging targetRevision
+        run: |
+          TAG="${{ steps.tag.outputs.TAG }}"
+          echo "Updating staging apps to track tag: $TAG"
+
+          # Update all staging Application manifests that reference yas-cd
+          for file in apps/staging/*.yaml; do
+            # Only update files that reference the yas-cd repo
+            if grep -q "repoURL: https://github.com/devops-hcmus/yas-cd" "$file"; then
+              # Replace the targetRevision for the yas-cd source only
+              # Pattern: line after yas-cd repoURL is targetRevision
+              sed -i "/repoURL: https:\/\/github.com\/devops-hcmus\/yas-cd/{n;s/targetRevision: .*/targetRevision: $TAG/}" "$file"
+              echo "  Updated: $file"
+            fi
+          done
+
+      - name: Commit and push
+        run: |
+          TAG="${{ steps.tag.outputs.TAG }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add apps/staging/
+          # Only commit if there are changes
+          if git diff --cached --quiet; then
+            echo "No changes to commit — staging already tracks $TAG"
+          else
+            git commit -m "cd(staging): update targetRevision to $TAG [skip ci]"
+            git push origin main
+            echo "Pushed staging update to gitops for tag $TAG"
+          fi
