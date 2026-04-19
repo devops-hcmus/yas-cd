@@ -13,6 +13,8 @@ spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
+  strategy:
+    type: {{ .Values.strategy.type | default "RollingUpdate" }}
   selector:
     matchLabels:
       {{- include "backend.selectorLabels" . | nindent 6 }}
