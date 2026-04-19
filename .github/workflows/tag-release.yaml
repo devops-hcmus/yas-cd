@@ -26,8 +26,6 @@ jobs:
             values-key: backend
           - service: payment
             values-key: backend
-          - service: payment-paypal
-            values-key: backend
           - service: product
             values-key: backend
           - service: promotion
@@ -92,7 +90,11 @@ jobs:
           git add clusters/staging/${{ matrix.service }}/values.yaml
           git diff --staged --quiet || \
             git commit -m "chore(${{ matrix.service }}): staging -> ${{ github.ref_name }}"
-          git push
+          for i in 1 2 3 4 5; do
+            git pull --rebase && git push && break
+            echo "Push attempt $i failed, retrying in 5s..."
+            sleep 5
+          done
 
   # ── Frontend services ─────────────────────────────────────────────────────
   build-storefront:
@@ -147,7 +149,11 @@ jobs:
           git add clusters/staging/storefront-ui/values.yaml
           git diff --staged --quiet || \
             git commit -m "chore(storefront-ui): staging -> ${{ github.ref_name }}"
-          git push
+          for i in 1 2 3 4 5; do
+            git pull --rebase && git push && break
+            echo "Push attempt $i failed, retrying in 5s..."
+            sleep 5
+          done
 
   build-backoffice:
     runs-on: ubuntu-latest
@@ -201,4 +207,8 @@ jobs:
           git add clusters/staging/backoffice-ui/values.yaml
           git diff --staged --quiet || \
             git commit -m "chore(backoffice-ui): staging -> ${{ github.ref_name }}"
-          git push
+          for i in 1 2 3 4 5; do
+            git pull --rebase && git push && break
+            echo "Push attempt $i failed, retrying in 5s..."
+            sleep 5
+          done
