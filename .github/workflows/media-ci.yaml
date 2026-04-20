@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - "media/**"
+      - "common-library/**"
       - ".github/workflows/actions/action.yaml"
       - ".github/workflows/media-ci.yaml"
       - "pom.xml"

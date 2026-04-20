@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - "location/**"
+      - "common-library/**"
       - ".github/workflows/actions/action.yaml"
       - ".github/workflows/location-ci.yaml"
       - "pom.xml"

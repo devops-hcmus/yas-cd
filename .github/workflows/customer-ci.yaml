@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - "customer/**"
+      - "common-library/**"
       - ".github/workflows/actions/action.yaml"
       - ".github/workflows/customer-ci.yaml"
       - "pom.xml"

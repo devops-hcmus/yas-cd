@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - "order/**"
+      - "common-library/**"
       - ".github/workflows/actions/action.yaml"
       - ".github/workflows/order-ci.yaml"
       - "pom.xml"

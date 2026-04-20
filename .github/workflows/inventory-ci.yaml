@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - "inventory/**"
+      - "common-library/**"
       - ".github/workflows/actions/action.yaml"
       - ".github/workflows/inventory-ci.yaml"
       - "pom.xml"
