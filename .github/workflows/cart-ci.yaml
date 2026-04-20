@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - "cart/**"
+      - "common-library/**"
       - ".github/workflows/actions/action.yaml"
       - ".github/workflows/cart-ci.yaml"
       - "pom.xml"

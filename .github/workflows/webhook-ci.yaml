@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - "webhook/**"
+      - "common-library/**"
       - ".github/workflows/actions/action.yaml"
       - ".github/workflows/webhook-ci.yaml"
       - "pom.xml"

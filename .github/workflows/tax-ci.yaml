@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - "tax/**"
+      - "common-library/**"
       - ".github/workflows/actions/action.yaml"
       - ".github/workflows/tax-ci.yaml"
       - "pom.xml"
