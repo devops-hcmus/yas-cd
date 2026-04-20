@@ -235,6 +235,19 @@ jobs:
         run: |
           kubectl get namespace ${{ env.TARGET_NAMESPACE }} || kubectl create namespace ${{ env.TARGET_NAMESPACE }}
 
+      - name: Wait for PostgreSQL to be Ready
+        run: |
+          echo "Waiting for PostgreSQL service in postgres namespace..."
+          kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=postgresql -n postgres --timeout=300s || {
+            echo "Warning: PostgreSQL not ready in postgres namespace. Checking if service exists..."
+            kubectl get svc postgresql -n postgres 2>/dev/null || {
+              echo "ERROR: PostgreSQL service not found in postgres namespace"
+              echo "Available services in postgres namespace:"
+              kubectl get svc -n postgres || echo "postgres namespace may not exist"
+              exit 1
+            }
+          }
+
       - name: Update Helm Dependencies
         run: |
           # Update dependencies for all charts that have them
