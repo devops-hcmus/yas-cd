@@ -261,6 +261,18 @@ jobs:
             fi
           done
 
+      - name: Deploy Configuration (ConfigMaps & Secrets)
+        run: |
+          echo "Deploying yas-configuration chart..."
+          helm upgrade --install yas-configuration k8s/charts/yas-configuration \
+            --namespace ${{ env.TARGET_NAMESPACE }} || {
+              echo "Failed to deploy yas-configuration. Checking if chart exists..."
+              ls -la k8s/charts/yas-configuration/ 2>/dev/null || echo "Chart not found"
+              exit 1
+            }
+          echo "Waiting for ConfigMaps to be created..."
+          sleep 5
+
       - name: Deploy Services via Helm
         run: |
           # Deploy backend services with custom image tags
