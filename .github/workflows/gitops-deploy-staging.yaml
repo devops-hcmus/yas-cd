@@ -8,9 +8,6 @@ on:
 jobs:
   update-gitops:
     runs-on: ubuntu-latest
-    concurrency:
-      group: gitops-write
-      cancel-in-progress: false
     steps:
       - name: Extract tag name
         id: tag

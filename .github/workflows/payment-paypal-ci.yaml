@@ -1,4 +1,3 @@
-# test: concurrency group gitops-write
 name: payment-paypal service ci
 
 on:

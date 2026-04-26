@@ -27,9 +27,6 @@ on:
 jobs:
   update-gitops:
     runs-on: ubuntu-latest
-    concurrency:
-      group: gitops-write
-      cancel-in-progress: false
     steps:
       - name: Install yq
         uses: mikefarah/yq@v4.44.1
