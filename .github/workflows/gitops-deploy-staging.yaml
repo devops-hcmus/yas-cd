@@ -8,6 +8,9 @@ on:
 jobs:
   update-gitops:
     runs-on: ubuntu-latest
+    concurrency:
+      group: gitops-write
+      cancel-in-progress: false
     steps:
       - name: Extract tag name
         id: tag
@@ -119,7 +122,7 @@ jobs:
 
           git commit -m "cd(staging): update targetRevision to $TAG and manage environment state [skip ci]"
 
-          for i in 1 2 3 4 5; do
+          for i in $(seq 1 15); do
             if [ -n "$(git status --porcelain)" ]; then
               echo "ERROR: Uncommitted changes detected before pull"
               exit 1
@@ -132,10 +135,10 @@ jobs:
             echo "Push attempt $i failed, retrying..."
             if ! git pull --rebase origin main; then
               git rebase --abort 2>/dev/null || true
-              [ $i -eq 5 ] && exit 1
+              [ $i -eq 15 ] && exit 1
             fi
 
-            sleep 5
+            sleep $((RANDOM % 10 + 5))
           done
 
           exit 1

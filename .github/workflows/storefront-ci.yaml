@@ -1,3 +1,4 @@
+# test: concurrency group gitops-write
 name: storefront service ci
 
 on:
