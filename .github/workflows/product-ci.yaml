@@ -42,7 +42,7 @@ jobs:
   update-gitops:
     needs: Build
     if: github.ref == 'refs/heads/main'
-    uses: ./.github/workflows/_gitops-update.yaml
+    uses: ./.github/workflows/_gitops-deploy-dev.yaml
     with:
       service: product
       env: dev
