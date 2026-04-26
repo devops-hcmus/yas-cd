@@ -38,10 +38,52 @@ jobs:
           token: ${{ secrets.gitops_pat }}
           path: gitops
 
-      - name: Update image tag
+      - name: Read current replicas from state (dev only)
+        if: ${{ inputs.env == 'dev' }}
+        id: read_state
+        run: |
+          cd gitops
+          REPLICAS=$(yq e ".dev.${{ inputs.service }}" state.yaml)
+          if [ "$REPLICAS" = "null" ] || [ -z "$REPLICAS" ]; then
+            REPLICAS=1
+          fi
+          echo "replicas=$REPLICAS" >> $GITHUB_OUTPUT
+          echo "Read dev.${{ inputs.service }} replicas: $REPLICAS"
+
+      - name: Update image tag and restore replicas (dev)
+        if: ${{ inputs.env == 'dev' }}
         run: |
           yq e ".${{ inputs.values-key }}.image.tag = \"${{ inputs.tag }}\"" \
             -i gitops/clusters/${{ inputs.env }}/${{ inputs.service }}/values.yaml
+          yq e ".${{ inputs.values-key }}.replicaCount = ${{ steps.read_state.outputs.replicas }}" \
+            -i gitops/clusters/${{ inputs.env }}/${{ inputs.service }}/values.yaml
+
+      - name: Update image tag (staging)
+        if: ${{ inputs.env == 'staging' }}
+        run: |
+          yq e ".${{ inputs.values-key }}.image.tag = \"${{ inputs.tag }}\"" \
+            -i gitops/clusters/${{ inputs.env }}/${{ inputs.service }}/values.yaml
+
+      - name: Scale down opposite environment (dev -> staging)
+        if: ${{ inputs.env == 'dev' }}
+        run: |
+          cd gitops
+          echo "Scaling all staging services to 0 replicas..."
+          for service_dir in clusters/staging/*/; do
+            service=$(basename "$service_dir")
+            values_file="$service_dir/values.yaml"
+            if [ -f "$values_file" ]; then
+              yq e ".backend.replicaCount = 0" -i "$values_file"
+              echo "  ✓ $service: replicaCount = 0"
+            fi
+          done
+
+      - name: Save dev replicas to state
+        if: ${{ inputs.env == 'dev' }}
+        run: |
+          cd gitops
+          yq e ".dev.${{ inputs.service }} = ${{ steps.read_state.outputs.replicas }}" -i state.yaml
+          echo "Saved dev.${{ inputs.service }} = ${{ steps.read_state.outputs.replicas }} to state.yaml"
 
       - name: Commit and push
         run: |
@@ -49,6 +91,9 @@ jobs:
           git config user.name "ci-bot"
           git config user.email "ci-bot@devops-hcmus.com"
           git add clusters/${{ inputs.env }}/${{ inputs.service }}/values.yaml
+          if [ "${{ inputs.env }}" = "dev" ]; then
+            git add state.yaml
+          fi
           git diff --staged --quiet || \
             git commit -m "chore(${{ inputs.service }}): ${{ inputs.env }} -> ${{ inputs.tag }}"
           for i in 1 2 3 4 5; do

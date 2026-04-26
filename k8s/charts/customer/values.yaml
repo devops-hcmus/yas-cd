@@ -1,4 +1,5 @@
 backend:
+  replicaCount: 1
   image:
     repository: danzgne/yas-customer
     tag: main
