@@ -20,6 +20,68 @@ jobs:
           token: ${{ secrets.GITOPS_PAT }}
           ref: main
 
+      - name: Install yq
+        uses: mikefarah/yq@v4.44.1
+
+      - name: Read current staging replicas from state
+        id: read_state
+        run: |
+          TAG="${{ steps.tag.outputs.TAG }}"
+          echo "Reading staging replicas from state.yaml for tag: $TAG"
+          # Create a map of all staging services and their current replicas
+          echo "staging_services=$(yq e '.staging | keys | .[]' state.yaml | tr '\n' ' ')" >> $GITHUB_OUTPUT
+
+      - name: Update all staging services with restored replicas and new tag
+        run: |
+          TAG="${{ steps.tag.outputs.TAG }}"
+          echo "Updating all staging services to tag: $TAG"
+
+          for service_dir in clusters/staging/*/; do
+            service=$(basename "$service_dir")
+            values_file="$service_dir/values.yaml"
+
+            if [ -f "$values_file" ]; then
+              # Read replicas from state
+              REPLICAS=$(yq e ".staging.$service" state.yaml)
+              if [ "$REPLICAS" = "null" ] || [ -z "$REPLICAS" ]; then
+                REPLICAS=1
+              fi
+
+              # Update image tag and replicas
+              yq e ".backend.image.tag = \"$TAG\"" -i "$values_file"
+              yq e ".backend.replicaCount = $REPLICAS" -i "$values_file"
+              echo "  ✓ $service: tag=$TAG, replicas=$REPLICAS"
+            fi
+          done
+
+      - name: Scale all dev services to 0 replicas
+        run: |
+          echo "Scaling all dev services to 0 replicas..."
+          for service_dir in clusters/dev/*/; do
+            service=$(basename "$service_dir")
+            values_file="$service_dir/values.yaml"
+
+            if [ -f "$values_file" ]; then
+              yq e ".backend.replicaCount = 0" -i "$values_file"
+              echo "  ✓ $service: replicaCount = 0"
+            fi
+          done
+
+      - name: Save staging replicas to state
+        run: |
+          echo "Saving staging replicas to state.yaml..."
+          for service_dir in clusters/staging/*/; do
+            service=$(basename "$service_dir")
+            values_file="$service_dir/values.yaml"
+
+            if [ -f "$values_file" ]; then
+              REPLICAS=$(yq e ".backend.replicaCount" "$values_file")
+              if [ "$REPLICAS" != "null" ] && [ -n "$REPLICAS" ]; then
+                yq e ".staging.$service = $REPLICAS" -i state.yaml
+              fi
+            fi
+          done
+
       - name: Update staging targetRevision
         run: |
           TAG="${{ steps.tag.outputs.TAG }}"
@@ -41,12 +103,21 @@ jobs:
           TAG="${{ steps.tag.outputs.TAG }}"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add apps/staging/
+          git add apps/staging/ clusters/staging/ clusters/dev/ state.yaml
+
           # Only commit if there are changes
           if git diff --cached --quiet; then
             echo "No changes to commit — staging already tracks $TAG"
           else
-            git commit -m "cd(staging): update targetRevision to $TAG [skip ci]"
-            git push origin main
+            git commit -m "cd(staging): update targetRevision to $TAG and manage environment state [skip ci]"
+
+            # Retry logic for push with conflict handling
+            for i in 1 2 3 4 5; do
+              git pull --rebase && git push && break
+              echo "Push attempt $i failed, retrying in 5s..."
+              sleep 5
+            done
+
             echo "Pushed staging update to gitops for tag $TAG"
           fi
+
