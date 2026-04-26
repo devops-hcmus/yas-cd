@@ -1,3 +1,4 @@
+# test: concurrency group gitops-write
 name: backoffice-bff service ci
 
 on:

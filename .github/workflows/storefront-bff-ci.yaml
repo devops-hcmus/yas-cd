@@ -1,3 +1,4 @@
+# test: concurrency group gitops-write
 name: storefront-bff service ci
 
 on:
