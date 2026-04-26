@@ -90,14 +90,52 @@ jobs:
           cd gitops
           git config user.name "ci-bot"
           git config user.email "ci-bot@devops-hcmus.com"
+
+          # Add all modified files
           git add clusters/${{ inputs.env }}/${{ inputs.service }}/values.yaml
           if [ "${{ inputs.env }}" = "dev" ]; then
-            git add state.yaml
+            git add clusters/staging/*/values.yaml state.yaml
           fi
-          git diff --staged --quiet || \
-            git commit -m "chore(${{ inputs.service }}): ${{ inputs.env }} -> ${{ inputs.tag }}"
+
+          # Check if there are changes to commit
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
+          # Commit
+          git commit -m "chore(${{ inputs.service }}): ${{ inputs.env }} -> ${{ inputs.tag }}"
+
+          # Push with retry and proper error handling
           for i in 1 2 3 4 5; do
-            git pull --rebase && git push && break
-            echo "Push attempt $i failed, retrying in 5s..."
+            # Ensure working directory is clean before pull
+            git status --porcelain
+            if [ -n "$(git status --porcelain)" ]; then
+              echo "ERROR: Uncommitted changes detected before pull"
+              git status
+              exit 1
+            fi
+
+            # Try to push
+            if git push; then
+              echo "✓ Push successful"
+              exit 0
+            fi
+
+            echo "Push attempt $i failed, pulling latest changes..."
+
+            # Pull with rebase
+            if ! git pull --rebase origin main; then
+              echo "ERROR: Rebase failed on attempt $i"
+              git rebase --abort 2>/dev/null || true
+              if [ $i -eq 5 ]; then
+                echo "ERROR: Failed after 5 attempts"
+                exit 1
+              fi
+            fi
+
             sleep 5
           done
+
+          echo "ERROR: Failed to push after 5 attempts"
+          exit 1

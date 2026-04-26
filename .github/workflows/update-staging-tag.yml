@@ -103,21 +103,50 @@ jobs:
           TAG="${{ steps.tag.outputs.TAG }}"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Add all modified files
           git add apps/staging/ clusters/staging/ clusters/dev/ state.yaml
 
-          # Only commit if there are changes
-          if git diff --cached --quiet; then
+          # Check if there are changes to commit
+          if git diff --staged --quiet; then
             echo "No changes to commit — staging already tracks $TAG"
-          else
-            git commit -m "cd(staging): update targetRevision to $TAG and manage environment state [skip ci]"
-
-            # Retry logic for push with conflict handling
-            for i in 1 2 3 4 5; do
-              git pull --rebase && git push && break
-              echo "Push attempt $i failed, retrying in 5s..."
-              sleep 5
-            done
-
-            echo "Pushed staging update to gitops for tag $TAG"
+            exit 0
           fi
+
+          # Commit
+          git commit -m "cd(staging): update targetRevision to $TAG and manage environment state [skip ci]"
+
+          # Push with retry and proper error handling
+          for i in 1 2 3 4 5; do
+            # Ensure working directory is clean before pull
+            git status --porcelain
+            if [ -n "$(git status --porcelain)" ]; then
+              echo "ERROR: Uncommitted changes detected before pull"
+              git status
+              exit 1
+            fi
+
+            # Try to push
+            if git push; then
+              echo "✓ Push successful for tag $TAG"
+              exit 0
+            fi
+
+            echo "Push attempt $i failed, pulling latest changes..."
+
+            # Pull with rebase
+            if ! git pull --rebase origin main; then
+              echo "ERROR: Rebase failed on attempt $i"
+              git rebase --abort 2>/dev/null || true
+              if [ $i -eq 5 ]; then
+                echo "ERROR: Failed after 5 attempts"
+                exit 1
+              fi
+            fi
+
+            sleep 5
+          done
+
+          echo "ERROR: Failed to push after 5 attempts"
+          exit 1
 
