@@ -1,4 +1,4 @@
-name: GitOps Update (Reusable)
+name: GitOps Deploy Dev (Reusable)
 
 on:
   workflow_call:
@@ -38,8 +38,7 @@ jobs:
           token: ${{ secrets.gitops_pat }}
           path: gitops
 
-      - name: Read current replicas from state (dev only)
-        if: ${{ inputs.env == 'dev' }}
+      - name: Read current replicas from state
         id: read_state
         run: |
           cd gitops
@@ -48,42 +47,37 @@ jobs:
             REPLICAS=1
           fi
           echo "replicas=$REPLICAS" >> $GITHUB_OUTPUT
-          echo "Read dev.${{ inputs.service }} replicas: $REPLICAS"
 
-      - name: Update image tag and restore replicas (dev)
-        if: ${{ inputs.env == 'dev' }}
+      - name: Update image tag and restore replicas
         run: |
           yq e ".${{ inputs.values-key }}.image.tag = \"${{ inputs.tag }}\"" \
-            -i gitops/clusters/${{ inputs.env }}/${{ inputs.service }}/values.yaml
+            -i gitops/clusters/dev/${{ inputs.service }}/values.yaml
           yq e ".${{ inputs.values-key }}.replicaCount = ${{ steps.read_state.outputs.replicas }}" \
-            -i gitops/clusters/${{ inputs.env }}/${{ inputs.service }}/values.yaml
+            -i gitops/clusters/dev/${{ inputs.service }}/values.yaml
 
-      - name: Update image tag (staging)
-        if: ${{ inputs.env == 'staging' }}
-        run: |
-          yq e ".${{ inputs.values-key }}.image.tag = \"${{ inputs.tag }}\"" \
-            -i gitops/clusters/${{ inputs.env }}/${{ inputs.service }}/values.yaml
-
-      - name: Scale down opposite environment (dev -> staging)
-        if: ${{ inputs.env == 'dev' }}
+      - name: Scale down staging
         run: |
           cd gitops
-          echo "Scaling all staging services to 0 replicas..."
           for service_dir in clusters/staging/*/; do
-            service=$(basename "$service_dir")
-            values_file="$service_dir/values.yaml"
-            if [ -f "$values_file" ]; then
+            values_file="${service_dir}values.yaml"
+            [ -f "$values_file" ] || continue
+            if yq e '.ui | has("image")' "$values_file" | grep -q "true"; then
+              yq e ".ui.replicaCount = 0" -i "$values_file"
+            elif yq e '.backend | has("image")' "$values_file" | grep -q "true"; then
               yq e ".backend.replicaCount = 0" -i "$values_file"
-              echo "  ✓ $service: replicaCount = 0"
+            elif yq e '.reloader | has("reloader")' "$values_file" | grep -q "true"; then
+              yq e ".reloader.reloader.enableHA = true" -i "$values_file"
+              yq e ".reloader.reloader.deployment.replicas = 0" -i "$values_file"
+            else
+              yq e ".replicaCount = 0" -i "$values_file"
             fi
           done
+          yq e "(select(.kind == \"Deployment\") | .spec.replicas) = 0" -i clusters/staging/nginx/nginx.yaml
 
       - name: Save dev replicas to state
-        if: ${{ inputs.env == 'dev' }}
         run: |
           cd gitops
           yq e ".dev.${{ inputs.service }} = ${{ steps.read_state.outputs.replicas }}" -i state.yaml
-          echo "Saved dev.${{ inputs.service }} = ${{ steps.read_state.outputs.replicas }} to state.yaml"
 
       - name: Commit and push
         run: |
@@ -91,51 +85,33 @@ jobs:
           git config user.name "ci-bot"
           git config user.email "ci-bot@devops-hcmus.com"
 
-          # Add all modified files
-          git add clusters/${{ inputs.env }}/${{ inputs.service }}/values.yaml
-          if [ "${{ inputs.env }}" = "dev" ]; then
-            git add clusters/staging/*/values.yaml state.yaml
-          fi
+          git add clusters/dev/${{ inputs.service }}/
+          git add clusters/staging/ state.yaml
 
-          # Check if there are changes to commit
           if git diff --staged --quiet; then
             echo "No changes to commit"
             exit 0
           fi
 
-          # Commit
           git commit -m "chore(${{ inputs.service }}): ${{ inputs.env }} -> ${{ inputs.tag }}"
 
-          # Push with retry and proper error handling
           for i in 1 2 3 4 5; do
-            # Ensure working directory is clean before pull
-            git status --porcelain
             if [ -n "$(git status --porcelain)" ]; then
               echo "ERROR: Uncommitted changes detected before pull"
-              git status
               exit 1
             fi
 
-            # Try to push
             if git push; then
-              echo "✓ Push successful"
               exit 0
             fi
 
-            echo "Push attempt $i failed, pulling latest changes..."
-
-            # Pull with rebase
+            echo "Push attempt $i failed, retrying..."
             if ! git pull --rebase origin main; then
-              echo "ERROR: Rebase failed on attempt $i"
               git rebase --abort 2>/dev/null || true
-              if [ $i -eq 5 ]; then
-                echo "ERROR: Failed after 5 attempts"
-                exit 1
-              fi
+              [ $i -eq 5 ] && exit 1
             fi
 
             sleep 5
           done
 
-          echo "ERROR: Failed to push after 5 attempts"
           exit 1
