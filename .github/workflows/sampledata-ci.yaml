@@ -50,3 +50,4 @@ jobs:
       values-key: backend
     secrets:
       gitops_pat: ${{ secrets.GITOPS_PAT }}
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
