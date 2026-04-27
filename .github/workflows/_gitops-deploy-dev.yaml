@@ -55,6 +55,33 @@ jobs:
           yq e ".${{ inputs.values-key }}.replicaCount = ${{ steps.read_state.outputs.replicas }}" \
             -i gitops/clusters/dev/${{ inputs.service }}/values.yaml
 
+      - name: Restore all dev services replicas
+        run: |
+          cd gitops
+          for service_dir in clusters/dev/*/; do
+            service=$(basename "$service_dir")
+            values_file="${service_dir}values.yaml"
+            [ -f "$values_file" ] || continue
+            [ "$service" = "${{ inputs.service }}" ] && continue
+
+            REPLICAS=$(yq e ".dev.$service" state.yaml)
+            [ "$REPLICAS" = "null" ] || [ -z "$REPLICAS" ] && REPLICAS=1
+
+            if yq e '.ui | has("image")' "$values_file" | grep -q "true"; then
+              yq e ".ui.replicaCount = $REPLICAS" -i "$values_file"
+            elif yq e '.backend | has("image")' "$values_file" | grep -q "true"; then
+              yq e ".backend.replicaCount = $REPLICAS" -i "$values_file"
+            elif yq e '.reloader | has("reloader")' "$values_file" | grep -q "true"; then
+              yq e ".reloader.reloader.enableHA = true" -i "$values_file"
+              yq e ".reloader.reloader.deployment.replicas = $REPLICAS" -i "$values_file"
+            else
+              yq e ".replicaCount = $REPLICAS" -i "$values_file"
+            fi
+          done
+          NGINX_REPLICAS=$(yq e ".dev.nginx" state.yaml)
+          [ "$NGINX_REPLICAS" = "null" ] || [ -z "$NGINX_REPLICAS" ] && NGINX_REPLICAS=1
+          yq e "(select(.kind == \"Deployment\") | .spec.replicas) = $NGINX_REPLICAS" -i clusters/dev/nginx/nginx.yaml
+
       - name: Scale down staging
         run: |
           cd gitops
@@ -85,7 +112,7 @@ jobs:
           git config user.name "ci-bot"
           git config user.email "ci-bot@devops-hcmus.com"
 
-          git add clusters/dev/${{ inputs.service }}/
+          git add clusters/dev/
           git add clusters/staging/ state.yaml
 
           if git diff --staged --quiet; then
