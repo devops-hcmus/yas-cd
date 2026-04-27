@@ -23,6 +23,8 @@ on:
     secrets:
       gitops_pat:
         required: true
+      DOCKERHUB_USERNAME:
+        required: false
 
 jobs:
   update-gitops:
