@@ -142,6 +142,10 @@
                 <version>${opentelemetry-semconv.version}</version>
             </dependency>
             <dependency>
+                <groupId>io.opentelemetry</groupId>
+                <artifactId>opentelemetry-exporter-otlp</artifactId>
+            </dependency>
+            <dependency>
                 <groupId>com.paypal.sdk</groupId>
                 <artifactId>checkout-sdk</artifactId>
                 <version>${paypal-checkout-sdk.version}</version>
