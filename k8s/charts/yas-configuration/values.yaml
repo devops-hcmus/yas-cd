@@ -24,6 +24,9 @@ applicationConfig:
     otlp:
       tracing:
         endpoint: http://opentelemetry-collector.observability:4318/v1/traces
+    opentelemetry:
+      resource-attributes:
+        "service.namespace": ${KUBERNETES_NAMESPACE}
     server:
       port: 8090
     health:
@@ -37,6 +40,7 @@ applicationConfig:
     metrics:
       tags:
         application: ${spring.application.name}
+        namespace: ${KUBERNETES_NAMESPACE}
     endpoints:
       web:
         exposure:
