@@ -21,12 +21,13 @@ applicationConfig:
     port: 80
 
   management:
-    otlp:
-      tracing:
-        endpoint: http://opentelemetry-collector.observability:4318/v1/traces
     opentelemetry:
       resource-attributes:
         "service.namespace": ${KUBERNETES_NAMESPACE}
+      tracing:
+        export:
+          otlp:
+            endpoint: http://opentelemetry-collector.observability:4318/v1/traces
     server:
       port: 8090
     health:
