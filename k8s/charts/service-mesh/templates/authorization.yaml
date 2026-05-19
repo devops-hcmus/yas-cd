@@ -73,9 +73,8 @@ spec:
             namespaces:
               - "{{ $.Values.ingressNamespace }}"
       {{- if $.Values.allowNodePort }}
-        # Allow external traffic via NodePort (no mTLS identity)
-        - source:
-            notPrincipals: ["_never_match_"]
+        # Allow all traffic (for NodePort/dev environment without mTLS identity)
+        - source: {}
       {{- end }}
       to:
         - operation:
@@ -106,9 +105,8 @@ spec:
               - "{{ $.Release.Namespace }}"
               - "{{ $.Values.ingressNamespace }}"
       {{- if $.Values.allowNodePort }}
-        # Allow external traffic via NodePort (no mTLS identity)
-        - source:
-            notPrincipals: ["_never_match_"]
+        # Allow all traffic (for NodePort/dev environment without mTLS identity)
+        - source: {}
       {{- end }}
 ---
 {{- end }}
@@ -136,9 +134,8 @@ spec:
               - "{{ .Release.Namespace }}"
               - "{{ .Values.ingressNamespace }}"
       {{- if .Values.allowNodePort }}
-        # Allow external traffic via NodePort (no mTLS identity)
-        - source:
-            notPrincipals: ["_never_match_"]
+        # Allow all traffic (for NodePort/dev environment without mTLS identity)
+        - source: {}
       {{- end }}
       to:
         - operation:
