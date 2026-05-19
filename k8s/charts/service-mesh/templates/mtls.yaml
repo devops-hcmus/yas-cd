@@ -1,7 +1,9 @@
 {{- if .Values.mtls.enabled }}
 # ============================================================
-# PeerAuthentication - mTLS for namespace {{ .Release.Namespace }}
+# PeerAuthentication - STRICT mTLS for all services in namespace
 # ============================================================
+# Namespace-level PeerAuthentication: LUÔN LUÔN STRICT
+# Đảm bảo tất cả traffic nội bộ giữa services phải có mTLS
 apiVersion: security.istio.io/v1beta1
 kind: PeerAuthentication
 metadata:
@@ -11,12 +13,72 @@ metadata:
     {{- include "service-mesh.labels" . | nindent 4 }}
 spec:
   mtls:
-    {{- if .Values.allowNodePort }}
-    mode: PERMISSIVE
-    {{- else }}
-    mode: {{ .Values.mtls.mode }}
-    {{- end }}
+    mode: STRICT
+
 ---
+# ============================================================
+# PeerAuthentication - PERMISSIVE for BFF Services (cửa ngõ)
+# ============================================================
+# BFF là đầu vào cho Frontend/Client, cần cho phép traffic PLAINTEXT
+{{- range .Values.bffServices }}
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: {{ . }}-permissive
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "service-mesh.labels" $ | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ . }}
+  mtls:
+    mode: PERMISSIVE
+---
+{{- end }}
+
+# ============================================================
+# PeerAuthentication - PERMISSIVE for UI Services (cửa ngõ)
+# ============================================================
+# UI services là frontend, cần cho phép kết nối trực tiếp
+{{- range .Values.uiServices }}
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: {{ . }}-permissive
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "service-mesh.labels" $ | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ . }}
+  mtls:
+    mode: PERMISSIVE
+---
+{{- end }}
+
+# ============================================================
+# PeerAuthentication - PERMISSIVE for Nginx Gateway (cửa ngõ)
+# ============================================================
+# Nginx Ingress controller cần PERMISSIVE để nhận traffic từ bên ngoài
+{{- if .Values.nginxGateway.enabled }}
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: nginx-permissive
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "service-mesh.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      app: nginx
+  mtls:
+    mode: PERMISSIVE
+---
+{{- end }}
+
 # ============================================================
 # DestinationRule - Wildcard mTLS for all services
 # ============================================================
@@ -32,14 +94,19 @@ spec:
   trafficPolicy:
     tls:
       mode: ISTIO_MUTUAL
+
 ---
-# --- Per-service DestinationRules ---
+# ============================================================
+# DestinationRule - Per-backend service
+# ============================================================
 {{- range .Values.backendServices }}
 apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule
 metadata:
   name: {{ .name }}-mtls
   namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "service-mesh.labels" $ | nindent 4 }}
 spec:
   host: {{ .name }}.{{ $.Release.Namespace }}.svc.cluster.local
   trafficPolicy:
@@ -52,12 +119,18 @@ spec:
         maxConnections: 100
 ---
 {{- end }}
+
+# ============================================================
+# DestinationRule - Per-BFF service
+# ============================================================
 {{- range .Values.bffServices }}
 apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule
 metadata:
   name: {{ . }}-mtls
   namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "service-mesh.labels" $ | nindent 4 }}
 spec:
   host: {{ . }}.{{ $.Release.Namespace }}.svc.cluster.local
   trafficPolicy:
@@ -65,12 +138,18 @@ spec:
       mode: ISTIO_MUTUAL
 ---
 {{- end }}
+
+# ============================================================
+# DestinationRule - Nginx Gateway
+# ============================================================
 {{- if .Values.nginxGateway.enabled }}
 apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule
 metadata:
   name: nginx-mtls
   namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "service-mesh.labels" . | nindent 4 }}
 spec:
   host: nginx.{{ .Release.Namespace }}.svc.cluster.local
   trafficPolicy:

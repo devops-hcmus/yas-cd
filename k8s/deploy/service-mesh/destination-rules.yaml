@@ -49,7 +49,7 @@ spec:
       mode: ISTIO_MUTUAL
     connectionPool:
       http:
-        h2UpgradePolicy: DEFAULT
+        h2UpgradePolicy: DO_NOT_UPGRADE
         maxRequestsPerConnection: 100
       tcp:
         maxConnections: 100
