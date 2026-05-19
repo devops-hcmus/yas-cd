@@ -135,9 +135,18 @@ kubectl wait --for=condition=ready pod \
   -l app.kubernetes.io/name=opentelemetry-operator \
   -n observability --timeout=120s
 
-#Install opentelemetry-collector
-helm upgrade --install opentelemetry-collector ./observability/opentelemetry \
---create-namespace --namespace observability
+# Webhook TLS can lag behind the controller pod; retry collector install on failure.
+for attempt in 1 2 3 4 5; do
+  if helm upgrade --install opentelemetry-collector ./observability/opentelemetry \
+    --create-namespace --namespace observability; then
+    break
+  fi
+  echo "opentelemetry-collector install failed (attempt ${attempt}/5), retrying in 15s..."
+  sleep 15
+done
+kubectl wait --for=condition=ready pod \
+  -l app.kubernetes.io/name=opentelemetry-collector \
+  -n observability --timeout=120s
 
 #Install promtail
 helm upgrade --install promtail grafana/promtail \
