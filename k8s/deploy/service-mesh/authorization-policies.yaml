@@ -10,504 +10,503 @@
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
-  name: deny-all-default
-  namespace: yas
-  labels:
-    app.kubernetes.io/part-of: yas
-spec:
-  {}
+    name: deny-all-default
+    namespace: {{ .Release.Namespace }}
+    labels:
+        app.kubernetes.io/part-of: yas
+spec: {}
 
 ---
 # --- ALLOW: Product Service ---
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
-  name: allow-product-access
-  namespace: yas
+    name: allow-product-access
+    namespace: {{ .Release.Namespace }}
 spec:
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: product
-  action: ALLOW
-  rules:
-    - from:
-        - source:
-            principals:
-              - "cluster.local/ns/yas/sa/storefront-bff"
-              - "cluster.local/ns/yas/sa/backoffice-bff"
-              - "cluster.local/ns/yas/sa/default"
-              - "cluster.local/ns/yas/sa/order"
-              - "cluster.local/ns/yas/sa/cart"
-              - "cluster.local/ns/yas/sa/search"
-              - "cluster.local/ns/yas/sa/recommendation"
-              - "cluster.local/ns/yas/sa/inventory"
-              - "cluster.local/ns/yas/sa/promotion"
-              - "cluster.local/ns/yas/sa/rating"
-              - "cluster.local/ns/yas/sa/sampledata"
-      to:
-        - operation:
-            ports: ["80"]
+    selector:
+        matchLabels:
+            app.kubernetes.io/name: product
+    action: ALLOW
+    rules:
+        - from:
+              - source:
+                    principals:
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/storefront-bff"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/backoffice-bff"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/default"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/order"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/cart"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/search"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/recommendation"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/inventory"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/promotion"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/rating"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/sampledata"
+          to:
+              - operation:
+                    ports: ["80"]
 
 ---
 # --- ALLOW: Cart Service ---
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
-  name: allow-cart-access
-  namespace: yas
+    name: allow-cart-access
+    namespace: {{ .Release.Namespace }}
 spec:
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: cart
-  action: ALLOW
-  rules:
-    - from:
-        - source:
-            principals:
-              - "cluster.local/ns/yas/sa/storefront-bff"
-              - "cluster.local/ns/yas/sa/backoffice-bff"
-              - "cluster.local/ns/yas/sa/default"
-              - "cluster.local/ns/yas/sa/order"
-      to:
-        - operation:
-            ports: ["80"]
+    selector:
+        matchLabels:
+            app.kubernetes.io/name: cart
+    action: ALLOW
+    rules:
+        - from:
+              - source:
+                    principals:
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/storefront-bff"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/backoffice-bff"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/default"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/order"
+          to:
+              - operation:
+                    ports: ["80"]
 
 ---
 # --- ALLOW: Order Service ---
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
-  name: allow-order-access
-  namespace: yas
+    name: allow-order-access
+    namespace: {{ .Release.Namespace }}
 spec:
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: order
-  action: ALLOW
-  rules:
-    - from:
-        - source:
-            principals:
-              - "cluster.local/ns/yas/sa/storefront-bff"
-              - "cluster.local/ns/yas/sa/backoffice-bff"
-              - "cluster.local/ns/yas/sa/default"
-              - "cluster.local/ns/yas/sa/payment"
-      to:
-        - operation:
-            ports: ["80"]
+    selector:
+        matchLabels:
+            app.kubernetes.io/name: order
+    action: ALLOW
+    rules:
+        - from:
+              - source:
+                    principals:
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/storefront-bff"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/backoffice-bff"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/default"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/payment"
+          to:
+              - operation:
+                    ports: ["80"]
 
 ---
 # --- ALLOW: Payment Service (restricted) ---
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
-  name: allow-payment-access
-  namespace: yas
+    name: allow-payment-access
+    namespace: {{ .Release.Namespace }}
 spec:
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: payment
-  action: ALLOW
-  rules:
-    - from:
-        - source:
-            principals:
-              - "cluster.local/ns/yas/sa/order"
-              - "cluster.local/ns/yas/sa/default"
-      to:
-        - operation:
-            ports: ["80"]
+    selector:
+        matchLabels:
+            app.kubernetes.io/name: payment
+    action: ALLOW
+    rules:
+        - from:
+              - source:
+                    principals:
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/order"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/default"
+          to:
+              - operation:
+                    ports: ["80"]
 
 ---
 # --- ALLOW: Customer Service ---
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
-  name: allow-customer-access
-  namespace: yas
+    name: allow-customer-access
+    namespace: {{ .Release.Namespace }}
 spec:
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: customer
-  action: ALLOW
-  rules:
-    - from:
-        - source:
-            principals:
-              - "cluster.local/ns/yas/sa/storefront-bff"
-              - "cluster.local/ns/yas/sa/backoffice-bff"
-              - "cluster.local/ns/yas/sa/default"
-              - "cluster.local/ns/yas/sa/order"
-              - "cluster.local/ns/yas/sa/sampledata"
-      to:
-        - operation:
-            ports: ["80"]
+    selector:
+        matchLabels:
+            app.kubernetes.io/name: customer
+    action: ALLOW
+    rules:
+        - from:
+              - source:
+                    principals:
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/storefront-bff"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/backoffice-bff"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/default"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/order"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/sampledata"
+          to:
+              - operation:
+                    ports: ["80"]
 
 ---
 # --- ALLOW: Inventory Service ---
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
-  name: allow-inventory-access
-  namespace: yas
+    name: allow-inventory-access
+    namespace: {{ .Release.Namespace }}
 spec:
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: inventory
-  action: ALLOW
-  rules:
-    - from:
-        - source:
-            principals:
-              - "cluster.local/ns/yas/sa/backoffice-bff"
-              - "cluster.local/ns/yas/sa/storefront-bff"
-              - "cluster.local/ns/yas/sa/default"
-              - "cluster.local/ns/yas/sa/order"
-              - "cluster.local/ns/yas/sa/product"
-              - "cluster.local/ns/yas/sa/sampledata"
-      to:
-        - operation:
-            ports: ["80"]
+    selector:
+        matchLabels:
+            app.kubernetes.io/name: inventory
+    action: ALLOW
+    rules:
+        - from:
+              - source:
+                    principals:
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/backoffice-bff"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/storefront-bff"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/default"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/order"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/product"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/sampledata"
+          to:
+              - operation:
+                    ports: ["80"]
 
 ---
 # --- ALLOW: Media Service ---
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
-  name: allow-media-access
-  namespace: yas
+    name: allow-media-access
+    namespace: {{ .Release.Namespace }}
 spec:
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: media
-  action: ALLOW
-  rules:
-    - from:
-        - source:
-            principals:
-              - "cluster.local/ns/yas/sa/storefront-bff"
-              - "cluster.local/ns/yas/sa/backoffice-bff"
-              - "cluster.local/ns/yas/sa/default"
-              - "cluster.local/ns/yas/sa/product"
-              - "cluster.local/ns/yas/sa/sampledata"
-      to:
-        - operation:
-            ports: ["80"]
+    selector:
+        matchLabels:
+            app.kubernetes.io/name: media
+    action: ALLOW
+    rules:
+        - from:
+              - source:
+                    principals:
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/storefront-bff"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/backoffice-bff"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/default"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/product"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/sampledata"
+          to:
+              - operation:
+                    ports: ["80"]
 
 ---
 # --- ALLOW: Location Service ---
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
-  name: allow-location-access
-  namespace: yas
+    name: allow-location-access
+    namespace: {{ .Release.Namespace }}
 spec:
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: location
-  action: ALLOW
-  rules:
-    - from:
-        - source:
-            principals:
-              - "cluster.local/ns/yas/sa/storefront-bff"
-              - "cluster.local/ns/yas/sa/backoffice-bff"
-              - "cluster.local/ns/yas/sa/default"
-              - "cluster.local/ns/yas/sa/order"
-              - "cluster.local/ns/yas/sa/sampledata"
-      to:
-        - operation:
-            ports: ["80"]
+    selector:
+        matchLabels:
+            app.kubernetes.io/name: location
+    action: ALLOW
+    rules:
+        - from:
+              - source:
+                    principals:
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/storefront-bff"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/backoffice-bff"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/default"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/order"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/sampledata"
+          to:
+              - operation:
+                    ports: ["80"]
 
 ---
 # --- ALLOW: Tax Service ---
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
-  name: allow-tax-access
-  namespace: yas
+    name: allow-tax-access
+    namespace: {{ .Release.Namespace }}
 spec:
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: tax
-  action: ALLOW
-  rules:
-    - from:
-        - source:
-            principals:
-              - "cluster.local/ns/yas/sa/backoffice-bff"
-              - "cluster.local/ns/yas/sa/default"
-              - "cluster.local/ns/yas/sa/order"
-              - "cluster.local/ns/yas/sa/product"
-              - "cluster.local/ns/yas/sa/sampledata"
-      to:
-        - operation:
-            ports: ["80"]
+    selector:
+        matchLabels:
+            app.kubernetes.io/name: tax
+    action: ALLOW
+    rules:
+        - from:
+              - source:
+                    principals:
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/backoffice-bff"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/default"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/order"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/product"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/sampledata"
+          to:
+              - operation:
+                    ports: ["80"]
 
 ---
 # --- ALLOW: Promotion Service ---
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
-  name: allow-promotion-access
-  namespace: yas
+    name: allow-promotion-access
+    namespace: {{ .Release.Namespace }}
 spec:
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: promotion
-  action: ALLOW
-  rules:
-    - from:
-        - source:
-            principals:
-              - "cluster.local/ns/yas/sa/storefront-bff"
-              - "cluster.local/ns/yas/sa/backoffice-bff"
-              - "cluster.local/ns/yas/sa/default"
-              - "cluster.local/ns/yas/sa/order"
-              - "cluster.local/ns/yas/sa/product"
-              - "cluster.local/ns/yas/sa/sampledata"
-      to:
-        - operation:
-            ports: ["80"]
+    selector:
+        matchLabels:
+            app.kubernetes.io/name: promotion
+    action: ALLOW
+    rules:
+        - from:
+              - source:
+                    principals:
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/storefront-bff"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/backoffice-bff"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/default"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/order"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/product"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/sampledata"
+          to:
+              - operation:
+                    ports: ["80"]
 
 ---
 # --- ALLOW: Rating Service ---
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
-  name: allow-rating-access
-  namespace: yas
+    name: allow-rating-access
+    namespace: {{ .Release.Namespace }}
 spec:
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: rating
-  action: ALLOW
-  rules:
-    - from:
-        - source:
-            principals:
-              - "cluster.local/ns/yas/sa/storefront-bff"
-              - "cluster.local/ns/yas/sa/backoffice-bff"
-              - "cluster.local/ns/yas/sa/default"
-              - "cluster.local/ns/yas/sa/product"
-              - "cluster.local/ns/yas/sa/sampledata"
-      to:
-        - operation:
-            ports: ["80"]
+    selector:
+        matchLabels:
+            app.kubernetes.io/name: rating
+    action: ALLOW
+    rules:
+        - from:
+              - source:
+                    principals:
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/storefront-bff"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/backoffice-bff"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/default"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/product"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/sampledata"
+          to:
+              - operation:
+                    ports: ["80"]
 
 ---
 # --- ALLOW: Search Service ---
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
-  name: allow-search-access
-  namespace: yas
+    name: allow-search-access
+    namespace: {{ .Release.Namespace }}
 spec:
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: search
-  action: ALLOW
-  rules:
-    - from:
-        - source:
-            principals:
-              - "cluster.local/ns/yas/sa/storefront-bff"
-              - "cluster.local/ns/yas/sa/default"
-              - "cluster.local/ns/yas/sa/sampledata"
-      to:
-        - operation:
-            ports: ["80"]
+    selector:
+        matchLabels:
+            app.kubernetes.io/name: search
+    action: ALLOW
+    rules:
+        - from:
+              - source:
+                    principals:
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/storefront-bff"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/default"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/sampledata"
+          to:
+              - operation:
+                    ports: ["80"]
 
 ---
 # --- ALLOW: Recommendation Service ---
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
-  name: allow-recommendation-access
-  namespace: yas
+    name: allow-recommendation-access
+    namespace: {{ .Release.Namespace }}
 spec:
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: recommendation
-  action: ALLOW
-  rules:
-    - from:
-        - source:
-            principals:
-              - "cluster.local/ns/yas/sa/storefront-bff"
-              - "cluster.local/ns/yas/sa/default"
-              - "cluster.local/ns/yas/sa/sampledata"
-      to:
-        - operation:
-            ports: ["80"]
+    selector:
+        matchLabels:
+            app.kubernetes.io/name: recommendation
+    action: ALLOW
+    rules:
+        - from:
+              - source:
+                    principals:
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/storefront-bff"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/default"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/sampledata"
+          to:
+              - operation:
+                    ports: ["80"]
 
 ---
 # --- ALLOW: Webhook Service ---
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
-  name: allow-webhook-access
-  namespace: yas
+    name: allow-webhook-access
+    namespace: {{ .Release.Namespace }}
 spec:
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: webhook
-  action: ALLOW
-  rules:
-    - from:
-        - source:
-            principals:
-              - "cluster.local/ns/yas/sa/backoffice-bff"
-              - "cluster.local/ns/yas/sa/default"
-              - "cluster.local/ns/yas/sa/order"
-              - "cluster.local/ns/yas/sa/payment"
-      to:
-        - operation:
-            ports: ["80"]
+    selector:
+        matchLabels:
+            app.kubernetes.io/name: webhook
+    action: ALLOW
+    rules:
+        - from:
+              - source:
+                    principals:
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/backoffice-bff"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/default"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/order"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/payment"
+          to:
+              - operation:
+                    ports: ["80"]
 
 ---
 # --- ALLOW: Sampledata Service ---
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
-  name: allow-sampledata-access
-  namespace: yas
+    name: allow-sampledata-access
+    namespace: {{ .Release.Namespace }}
 spec:
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: sampledata
-  action: ALLOW
-  rules:
-    - from:
-        - source:
-            principals:
-              - "cluster.local/ns/yas/sa/default"
-              - "cluster.local/ns/yas/sa/backoffice-bff"
-      to:
-        - operation:
-            ports: ["80"]
+    selector:
+        matchLabels:
+            app.kubernetes.io/name: sampledata
+    action: ALLOW
+    rules:
+        - from:
+              - source:
+                    principals:
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/default"
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/backoffice-bff"
+          to:
+              - operation:
+                    ports: ["80"]
 
 ---
 # --- ALLOW: Storefront-BFF ---
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
-  name: allow-storefront-bff-access
-  namespace: yas
+    name: allow-storefront-bff-access
+    namespace: {{ .Release.Namespace }}
 spec:
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: storefront-bff
-  action: ALLOW
-  rules:
-    - from:
-        - source:
-            principals:
-              - "cluster.local/ns/yas/sa/default"
-        - source:
-            namespaces:
-              - "ingress-nginx"
-      to:
-        - operation:
-            ports: ["80"]
+    selector:
+        matchLabels:
+            app.kubernetes.io/name: storefront-bff
+    action: ALLOW
+    rules:
+        - from:
+              - source:
+                    principals:
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/default"
+              - source:
+                    namespaces:
+                        - "ingress-nginx"
+          to:
+              - operation:
+                    ports: ["80"]
 
 ---
 # --- ALLOW: Backoffice-BFF ---
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
-  name: allow-backoffice-bff-access
-  namespace: yas
+    name: allow-backoffice-bff-access
+    namespace: {{ .Release.Namespace }}
 spec:
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: backoffice-bff
-  action: ALLOW
-  rules:
-    - from:
-        - source:
-            principals:
-              - "cluster.local/ns/yas/sa/default"
-        - source:
-            namespaces:
-              - "ingress-nginx"
-      to:
-        - operation:
-            ports: ["80"]
+    selector:
+        matchLabels:
+            app.kubernetes.io/name: backoffice-bff
+    action: ALLOW
+    rules:
+        - from:
+              - source:
+                    principals:
+                        - "cluster.local/ns/{{ .Release.Namespace }}/sa/default"
+              - source:
+                    namespaces:
+                        - "ingress-nginx"
+          to:
+              - operation:
+                    ports: ["80"]
 
 ---
 # --- ALLOW: Nginx API Gateway ---
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
-  name: allow-nginx-access
-  namespace: yas
+    name: allow-nginx-access
+    namespace: {{ .Release.Namespace }}
 spec:
-  selector:
-    matchLabels:
-      app: nginx
-  action: ALLOW
-  rules:
-    - from:
-        - source:
-            namespaces:
-              - "yas"
-              - "ingress-nginx"
-      to:
-        - operation:
-            ports: ["80"]
+    selector:
+        matchLabels:
+            app: nginx
+    action: ALLOW
+    rules:
+        - from:
+              - source:
+                    namespaces:
+                        - "{{ .Release.Namespace }}"
+                        - "ingress-nginx"
+          to:
+              - operation:
+                    ports: ["80"]
 
 ---
 # --- ALLOW: UI Services (storefront-ui, backoffice-ui, swagger-ui) ---
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
-  name: allow-ui-services-access
-  namespace: yas
+    name: allow-ui-services-access
+    namespace: {{ .Release.Namespace }}
 spec:
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: storefront-ui
-  action: ALLOW
-  rules:
-    - from:
-        - source:
-            namespaces:
-              - "yas"
-              - "ingress-nginx"
+    selector:
+        matchLabels:
+            app.kubernetes.io/name: storefront-ui
+    action: ALLOW
+    rules:
+        - from:
+              - source:
+                    namespaces:
+                        - "{{ .Release.Namespace }}"
+                        - "ingress-nginx"
 
 ---
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
-  name: allow-backoffice-ui-access
-  namespace: yas
+    name: allow-backoffice-ui-access
+    namespace: {{ .Release.Namespace }}
 spec:
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: backoffice-ui
-  action: ALLOW
-  rules:
-    - from:
-        - source:
-            namespaces:
-              - "yas"
-              - "ingress-nginx"
+    selector:
+        matchLabels:
+            app.kubernetes.io/name: backoffice-ui
+    action: ALLOW
+    rules:
+        - from:
+              - source:
+                    namespaces:
+                        - "{{ .Release.Namespace }}"
+                        - "ingress-nginx"
 
 ---
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
-  name: allow-swagger-ui-access
-  namespace: yas
+    name: allow-swagger-ui-access
+    namespace: {{ .Release.Namespace }}
 spec:
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: swagger-ui
-  action: ALLOW
-  rules:
-    - from:
-        - source:
-            namespaces:
-              - "yas"
-              - "ingress-nginx"
+    selector:
+        matchLabels:
+            app.kubernetes.io/name: swagger-ui
+    action: ALLOW
+    rules:
+        - from:
+              - source:
+                    namespaces:
+                        - "{{ .Release.Namespace }}"
+                        - "ingress-nginx"
