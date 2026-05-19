@@ -1,9 +1,7 @@
 {{- if .Values.mtls.enabled }}
 # ============================================================
-# PeerAuthentication - STRICT mTLS for all services in namespace
+# 1. KHOÁ CHẶT TOÀN BỘ NAMESPACE BẰNG STRICT mTLS
 # ============================================================
-# Namespace-level PeerAuthentication: LUÔN LUÔN STRICT
-# Đảm bảo tất cả traffic nội bộ giữa services phải có mTLS
 apiVersion: security.istio.io/v1beta1
 kind: PeerAuthentication
 metadata:
@@ -17,7 +15,7 @@ spec:
 
 ---
 # ============================================================
-# PeerAuthentication - PERMISSIVE for BFF Services (cửa ngõ)
+# 2. MỞ PERMISSIVE CHO CÁC CỬA NGÕ (ĐỂ NHẬN INGRESS / NODEPORT)
 # ============================================================
 {{- range .Values.bffServices }}
 apiVersion: security.istio.io/v1beta1
@@ -30,15 +28,12 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app.kubernetes.io/name: {{ . }}  # Đã sửa thành chuẩn k8s label
+      app.kubernetes.io/name: {{ . }}
   mtls:
     mode: PERMISSIVE
 ---
 {{- end }}
 
-# ============================================================
-# PeerAuthentication - PERMISSIVE for UI Services (cửa ngõ)
-# ============================================================
 {{- range .Values.uiServices }}
 apiVersion: security.istio.io/v1beta1
 kind: PeerAuthentication
@@ -50,15 +45,12 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app.kubernetes.io/name: {{ . }}  # Đã sửa thành chuẩn k8s label
+      app.kubernetes.io/name: {{ . }}
   mtls:
     mode: PERMISSIVE
 ---
 {{- end }}
 
-# ============================================================
-# PeerAuthentication - PERMISSIVE for Nginx Gateway (cửa ngõ)
-# ============================================================
 {{- if .Values.nginxGateway.enabled }}
 apiVersion: security.istio.io/v1beta1
 kind: PeerAuthentication
@@ -70,14 +62,14 @@ metadata:
 spec:
   selector:
     matchLabels:
-      {{ .Values.nginxGateway.labelKey }}: {{ .Values.nginxGateway.labelValue }} # Lấy động từ values.yaml
+      {{ .Values.nginxGateway.labelKey }}: {{ .Values.nginxGateway.labelValue }}
   mtls:
     mode: PERMISSIVE
 ---
 {{- end }}
 
 # ============================================================
-# DestinationRule - Wildcard mTLS for all services
+# 3. DESTINATION RULES (ÉP TẤT CẢ CLIENT PHẢI GỬI mTLS)
 # ============================================================
 apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule
@@ -93,9 +85,6 @@ spec:
       mode: ISTIO_MUTUAL
 
 ---
-# ============================================================
-# DestinationRule - Per-backend service
-# ============================================================
 {{- range .Values.backendServices }}
 apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule
@@ -117,9 +106,6 @@ spec:
 ---
 {{- end }}
 
-# ============================================================
-# DestinationRule - Per-BFF service
-# ============================================================
 {{- range .Values.bffServices }}
 apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule
@@ -136,9 +122,6 @@ spec:
 ---
 {{- end }}
 
-# ============================================================
-# DestinationRule - Nginx Gateway
-# ============================================================
 {{- if .Values.nginxGateway.enabled }}
 apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule
