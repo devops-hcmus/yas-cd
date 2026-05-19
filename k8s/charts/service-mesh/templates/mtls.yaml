@@ -19,7 +19,6 @@ spec:
 # ============================================================
 # PeerAuthentication - PERMISSIVE for BFF Services (cửa ngõ)
 # ============================================================
-# BFF là đầu vào cho Frontend/Client, cần cho phép traffic PLAINTEXT
 {{- range .Values.bffServices }}
 apiVersion: security.istio.io/v1beta1
 kind: PeerAuthentication
@@ -31,7 +30,7 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app: {{ . }}
+      app.kubernetes.io/name: {{ . }}  # Đã sửa thành chuẩn k8s label
   mtls:
     mode: PERMISSIVE
 ---
@@ -40,7 +39,6 @@ spec:
 # ============================================================
 # PeerAuthentication - PERMISSIVE for UI Services (cửa ngõ)
 # ============================================================
-# UI services là frontend, cần cho phép kết nối trực tiếp
 {{- range .Values.uiServices }}
 apiVersion: security.istio.io/v1beta1
 kind: PeerAuthentication
@@ -52,7 +50,7 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app: {{ . }}
+      app.kubernetes.io/name: {{ . }}  # Đã sửa thành chuẩn k8s label
   mtls:
     mode: PERMISSIVE
 ---
@@ -61,7 +59,6 @@ spec:
 # ============================================================
 # PeerAuthentication - PERMISSIVE for Nginx Gateway (cửa ngõ)
 # ============================================================
-# Nginx Ingress controller cần PERMISSIVE để nhận traffic từ bên ngoài
 {{- if .Values.nginxGateway.enabled }}
 apiVersion: security.istio.io/v1beta1
 kind: PeerAuthentication
@@ -73,7 +70,7 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app: nginx
+      {{ .Values.nginxGateway.labelKey }}: {{ .Values.nginxGateway.labelValue }} # Lấy động từ values.yaml
   mtls:
     mode: PERMISSIVE
 ---
