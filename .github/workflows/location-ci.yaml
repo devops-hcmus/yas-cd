@@ -1,14 +1,14 @@
 name: location service ci
 
-on:
-  push:
-    paths:
-      - "location/**"
-      - "common-library/**"
-      - ".github/workflows/actions/action.yaml"
-      - ".github/workflows/location-ci.yaml"
-      - "pom.xml"
-  workflow_dispatch:
+# on:
+#   push:
+#     paths:
+#       - "location/**"
+#       - "common-library/**"
+#       - ".github/workflows/actions/action.yaml"
+#       - ".github/workflows/location-ci.yaml"
+#       - "pom.xml"
+#   workflow_dispatch:
 
 jobs:
   Build:

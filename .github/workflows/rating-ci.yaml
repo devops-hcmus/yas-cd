@@ -1,14 +1,14 @@
 name: rating service ci
 
-on:
-  push:
-    paths:
-      - "rating/**"
-      - "common-library/**"
-      - ".github/workflows/actions/action.yaml"
-      - ".github/workflows/rating-ci.yaml"
-      - "pom.xml"
-  workflow_dispatch:
+# on:
+#   push:
+#     paths:
+#       - "rating/**"
+#       - "common-library/**"
+#       - ".github/workflows/actions/action.yaml"
+#       - ".github/workflows/rating-ci.yaml"
+#       - "pom.xml"
+#   workflow_dispatch:
 
 jobs:
   Build:
