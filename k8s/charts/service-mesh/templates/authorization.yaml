@@ -45,6 +45,14 @@ spec:
       to:
         - operation:
             ports: ["80"]
+    # Allow Prometheus metric scraping
+    - from:
+        - source:
+            namespaces:
+              - "{{ $.Values.observabilityNamespace }}"
+      to:
+        - operation:
+            ports: ["{{ $.Values.metricPort }}"]
 ---
 {{- end }}
 
@@ -82,6 +90,14 @@ spec:
         - operation:
             ports: ["80"]
     {{- end }}
+    # Allow Prometheus metric scraping
+    - from:
+        - source:
+            namespaces:
+              - "{{ $.Values.observabilityNamespace }}"
+      to:
+        - operation:
+            ports: ["{{ $.Values.metricPort }}"]
 ---
 {{- end }}
 
@@ -92,21 +108,21 @@ spec:
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
-  name: allow-{{ . }}-access
+  name: allow-{{ .name }}-access
   namespace: {{ $.Release.Namespace }}
   labels:
     {{- include "service-mesh.labels" $ | nindent 4 }}
 spec:
   selector:
     matchLabels:
-      app.kubernetes.io/name: {{ . }}
+      app.kubernetes.io/name: {{ .name }}
   action: ALLOW
   rules:
     {{- if $.Values.allowNodePort }}
     # Allow all traffic (for NodePort/dev environment without mTLS identity)
     - to:
         - operation:
-            ports: ["80"]
+            ports: ["{{ .port }}"]
     {{- else }}
     - from:
         - source:
@@ -115,7 +131,7 @@ spec:
               - "{{ $.Values.ingressNamespace }}"
       to:
         - operation:
-            ports: ["80"]
+            ports: ["{{ .port }}"]
     {{- end }}
 ---
 {{- end }}
