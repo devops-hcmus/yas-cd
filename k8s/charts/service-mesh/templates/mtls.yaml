@@ -38,14 +38,14 @@ spec:
 apiVersion: security.istio.io/v1beta1
 kind: PeerAuthentication
 metadata:
-  name: {{ . }}-permissive
+  name: {{ .name }}-permissive
   namespace: {{ $.Release.Namespace }}
   labels:
     {{- include "service-mesh.labels" $ | nindent 4 }}
 spec:
   selector:
     matchLabels:
-      app.kubernetes.io/name: {{ . }}
+      app.kubernetes.io/name: {{ .name }}
   mtls:
     mode: PERMISSIVE
 ---
