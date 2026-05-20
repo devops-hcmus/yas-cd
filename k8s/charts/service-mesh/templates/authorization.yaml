@@ -74,7 +74,7 @@ spec:
               - "{{ $.Values.ingressNamespace }}"
       {{- if $.Values.allowNodePort }}
         # Allow all traffic (for NodePort/dev environment without mTLS identity)
-        - source: {}
+        - {}
       {{- end }}
       to:
         - operation:
@@ -106,7 +106,7 @@ spec:
               - "{{ $.Values.ingressNamespace }}"
       {{- if $.Values.allowNodePort }}
         # Allow all traffic (for NodePort/dev environment without mTLS identity)
-        - source: {}
+        - {}
       {{- end }}
 ---
 {{- end }}
@@ -135,7 +135,7 @@ spec:
               - "{{ .Values.ingressNamespace }}"
       {{- if .Values.allowNodePort }}
         # Allow all traffic (for NodePort/dev environment without mTLS identity)
-        - source: {}
+        - {}
       {{- end }}
       to:
         - operation:
