@@ -33,10 +33,10 @@ backendServices:
           - order
           - cart
           - search
-          - recommendation
+          # - recommendation  # REMOVED SERVICE
           - inventory
-          - promotion
-          - rating
+          # - promotion  # REMOVED SERVICE
+          # - rating  # REMOVED SERVICE
           - sampledata
     - name: cart
       allowedCallers:
@@ -47,10 +47,10 @@ backendServices:
       allowedCallers:
           - storefront-bff
           - backoffice-bff
-          - payment
-    - name: payment
-      allowedCallers:
-          - order
+          # - payment  # REMOVED SERVICE
+    # - name: payment  # REMOVED SERVICE
+    #   allowedCallers:
+    #       - order
     - name: customer
       allowedCallers:
           - storefront-bff
@@ -70,44 +70,44 @@ backendServices:
           - backoffice-bff
           - product
           - sampledata
-    - name: location
-      allowedCallers:
-          - storefront-bff
-          - backoffice-bff
-          - order
-          - sampledata
+    # - name: location  # REMOVED SERVICE
+    #   allowedCallers:
+    #       - storefront-bff
+    #       - backoffice-bff
+    #       - order
+    #       - sampledata
     - name: tax
       allowedCallers:
           - backoffice-bff
           - order
           - product
           - sampledata
-    - name: promotion
-      allowedCallers:
-          - storefront-bff
-          - backoffice-bff
-          - order
-          - product
-          - sampledata
-    - name: rating
-      allowedCallers:
-          - storefront-bff
-          - backoffice-bff
-          - product
-          - sampledata
+    # - name: promotion  # REMOVED SERVICE
+    #   allowedCallers:
+    #       - storefront-bff
+    #       - backoffice-bff
+    #       - order
+    #       - product
+    #       - sampledata
+    # - name: rating  # REMOVED SERVICE
+    #   allowedCallers:
+    #       - storefront-bff
+    #       - backoffice-bff
+    #       - product
+    #       - sampledata
     - name: search
       allowedCallers:
           - storefront-bff
           - sampledata
-    - name: recommendation
-      allowedCallers:
-          - storefront-bff
-          - sampledata
-    - name: webhook
-      allowedCallers:
-          - backoffice-bff
-          - order
-          - payment
+    # - name: recommendation  # REMOVED SERVICE
+    #   allowedCallers:
+    #       - storefront-bff
+    #       - sampledata
+    # - name: webhook  # REMOVED SERVICE
+    #   allowedCallers:
+    #       - backoffice-bff
+    #       - order
+    #       - payment
     - name: sampledata
       allowedCallers:
           - backoffice-bff
@@ -141,12 +141,12 @@ retryServices:
     - product
     - cart
     - order
-    - payment
+    # - payment  # REMOVED SERVICE
     - customer
     - inventory
     - media
     - search
-    - recommendation
+    # - recommendation  # REMOVED SERVICE
 
 # External services ngoài mesh (không có Istio sidecar)
 # Cần DestinationRule DISABLE TLS để Envoy không apply mTLS
