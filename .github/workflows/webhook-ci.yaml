@@ -1,14 +1,14 @@
 name: webhook service ci
 
-on:
-  push:
-    paths:
-      - "webhook/**"
-      - "common-library/**"
-      - ".github/workflows/actions/action.yaml"
-      - ".github/workflows/webhook-ci.yaml"
-      - "pom.xml"
-  workflow_dispatch:
+# on:
+#   push:
+#     paths:
+#       - "webhook/**"
+#       - "common-library/**"
+#       - ".github/workflows/actions/action.yaml"
+#       - ".github/workflows/webhook-ci.yaml"
+#       - "pom.xml"
+#   workflow_dispatch:
 
 jobs:
   Build:

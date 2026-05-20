@@ -1,14 +1,14 @@
 name: recommendation service ci
 
-on:
-  push:
-    paths:
-      - "recommendation/**"
-      - "common-library/**"
-      - ".github/workflows/actions/action.yaml"
-      - ".github/workflows/recommendation-ci.yaml"
-      - "pom.xml"
-  workflow_dispatch:
+# on:
+#   push:
+#     paths:
+#       - "recommendation/**"
+#       - "common-library/**"
+#       - ".github/workflows/actions/action.yaml"
+#       - ".github/workflows/recommendation-ci.yaml"
+#       - "pom.xml"
+#   workflow_dispatch:
 
 jobs:
   Build:

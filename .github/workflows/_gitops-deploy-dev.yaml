@@ -105,7 +105,8 @@ jobs:
           cd gitops
           REPLICAS=$(yq e ".dev.${{ inputs.service }}" state.yaml)
           if [ "$REPLICAS" = "null" ] || [ -z "$REPLICAS" ]; then
-            REPLICAS=1
+            echo "Service ${{ inputs.service }} is not managed in state.yaml (disabled)"
+            exit 1
           fi
           echo "replicas=$REPLICAS" >> $GITHUB_OUTPUT
 
@@ -135,7 +136,7 @@ jobs:
             [ "$service" = "${{ inputs.service }}" ] && continue
 
             REPLICAS=$(yq e ".dev.$service" state.yaml)
-            [ "$REPLICAS" = "null" ] || [ -z "$REPLICAS" ] && REPLICAS=1
+            [ "$REPLICAS" = "null" ] || [ -z "$REPLICAS" ] && continue
 
             if yq e '.ui | has("image")' "$values_file" | grep -q "true"; then
               yq e ".ui.replicaCount = $REPLICAS" -i "$values_file"

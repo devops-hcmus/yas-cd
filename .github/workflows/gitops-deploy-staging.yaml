@@ -18,30 +18,30 @@ jobs:
             values-key: backend
           - service: inventory
             values-key: backend
-          - service: location
-            values-key: backend
+          # - service: location
+          #   values-key: backend
           - service: media
             values-key: backend
           - service: order
             values-key: backend
-          - service: payment
-            values-key: backend
+          # - service: payment
+          #   values-key: backend
           - service: product
             values-key: backend
-          - service: promotion
-            values-key: backend
-          - service: rating
-            values-key: backend
-          - service: recommendation
-            values-key: backend
+          # - service: promotion
+          #   values-key: backend
+          # - service: rating
+          #   values-key: backend
+          # - service: recommendation
+          #   values-key: backend
           - service: sampledata
             values-key: backend
           - service: search
             values-key: backend
           - service: tax
             values-key: backend
-          - service: webhook
-            values-key: backend
+          # - service: webhook
+          #   values-key: backend
           - service: backoffice-bff
             values-key: backend
           - service: storefront-bff
@@ -211,7 +211,7 @@ jobs:
             [ -f "$values_file" ] || continue
 
             REPLICAS=$(yq e ".staging.$service" state.yaml)
-            [ "$REPLICAS" = "null" ] || [ -z "$REPLICAS" ] && REPLICAS=1
+            [ "$REPLICAS" = "null" ] || [ -z "$REPLICAS" ] && continue
 
             if yq e '.ui | has("image")' "$values_file" | grep -q "true"; then
               yq e ".ui.image.tag = \"$TAG\"" -i "$values_file"
@@ -237,6 +237,9 @@ jobs:
             service=$(basename "$service_dir")
             values_file="${service_dir}values.yaml"
             [ -f "$values_file" ] || continue
+
+            TRACKED=$(yq e ".staging.$service" state.yaml)
+            [ "$TRACKED" = "null" ] || [ -z "$TRACKED" ] && continue
 
             if yq e '.ui | has("image")' "$values_file" | grep -q "true"; then
               REPLICAS=$(yq e '.ui.replicaCount' "$values_file")
