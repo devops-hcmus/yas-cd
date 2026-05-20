@@ -67,9 +67,7 @@ spec:
   rules:
     {{- if $.Values.allowNodePort }}
     # Allow all traffic (for NodePort/dev environment without mTLS identity)
-    - from:
-        - {}
-      to:
+    - to:
         - operation:
             ports: ["80"]
     {{- else }}
@@ -106,9 +104,7 @@ spec:
   rules:
     {{- if $.Values.allowNodePort }}
     # Allow all traffic (for NodePort/dev environment without mTLS identity)
-    - from:
-        - {}
-      to:
+    - to:
         - operation:
             ports: ["80"]
     {{- else }}
@@ -143,9 +139,7 @@ spec:
   rules:
     {{- if .Values.allowNodePort }}
     # Allow all traffic (for NodePort/dev environment without mTLS identity)
-    - from:
-        - {}
-      to:
+    - to:
         - operation:
             ports: ["80"]
     {{- else }}
