@@ -65,6 +65,14 @@ spec:
       app.kubernetes.io/name: {{ . }}
   action: ALLOW
   rules:
+    {{- if $.Values.allowNodePort }}
+    # Allow all traffic (for NodePort/dev environment without mTLS identity)
+    - from:
+        - {}
+      to:
+        - operation:
+            ports: ["80"]
+    {{- else }}
     - from:
         - source:
             principals:
@@ -72,13 +80,10 @@ spec:
         - source:
             namespaces:
               - "{{ $.Values.ingressNamespace }}"
-      {{- if $.Values.allowNodePort }}
-        # Allow all traffic (for NodePort/dev environment without mTLS identity)
-        - {}
-      {{- end }}
       to:
         - operation:
             ports: ["80"]
+    {{- end }}
 ---
 {{- end }}
 
@@ -99,15 +104,23 @@ spec:
       app.kubernetes.io/name: {{ . }}
   action: ALLOW
   rules:
+    {{- if $.Values.allowNodePort }}
+    # Allow all traffic (for NodePort/dev environment without mTLS identity)
+    - from:
+        - {}
+      to:
+        - operation:
+            ports: ["80"]
+    {{- else }}
     - from:
         - source:
             namespaces:
               - "{{ $.Release.Namespace }}"
               - "{{ $.Values.ingressNamespace }}"
-      {{- if $.Values.allowNodePort }}
-        # Allow all traffic (for NodePort/dev environment without mTLS identity)
-        - {}
-      {{- end }}
+      to:
+        - operation:
+            ports: ["80"]
+    {{- end }}
 ---
 {{- end }}
 
@@ -128,17 +141,22 @@ spec:
       {{ .Values.nginxGateway.labelKey }}: {{ .Values.nginxGateway.labelValue }}
   action: ALLOW
   rules:
+    {{- if .Values.allowNodePort }}
+    # Allow all traffic (for NodePort/dev environment without mTLS identity)
+    - from:
+        - {}
+      to:
+        - operation:
+            ports: ["80"]
+    {{- else }}
     - from:
         - source:
             namespaces:
               - "{{ .Release.Namespace }}"
               - "{{ .Values.ingressNamespace }}"
-      {{- if .Values.allowNodePort }}
-        # Allow all traffic (for NodePort/dev environment without mTLS identity)
-        - {}
-      {{- end }}
       to:
         - operation:
             ports: ["80"]
+    {{- end }}
 {{- end }}
 {{- end }}
