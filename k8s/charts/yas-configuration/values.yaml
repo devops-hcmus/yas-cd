@@ -21,6 +21,11 @@ applicationConfig:
         port: 80
 
     management:
+        # Micrometer OtlpMeterRegistry (SB4) — tắt push OTLP; metric dùng Prometheus scrape /actuator/prometheus
+        otlp:
+            metrics:
+                export:
+                    enabled: false
         opentelemetry:
             resource-attributes:
                 "service.namespace": ${KUBERNETES_NAMESPACE}
@@ -28,11 +33,6 @@ applicationConfig:
                 export:
                     otlp:
                         endpoint: http://opentelemetry-collector.observability:4318/v1/traces
-
-            metrics:
-                export:
-                    otlp:
-                        endpoint: http://opentelemetry-collector.observability:4318/v1/metrics
         server:
             port: 8090
         health:
