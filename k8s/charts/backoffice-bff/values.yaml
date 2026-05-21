@@ -32,6 +32,12 @@ backend:
       value: prod
     - name: UI_HOST
       value: http://backoffice-ui:3000
+    - name: MANAGEMENT_OTLP_METRICS_EXPORT_URL
+      value: http://opentelemetry-collector.observability:4318/v1/metrics
+    - name: MANAGEMENT_OTLP_TRACING_ENDPOINT
+      value: http://opentelemetry-collector.observability:4318/v1/traces
+    - name: MANAGEMENT_OTLP_METRICS_EXPORT_ENABLED
+      value: "true"
   extraEnvFroms:
     - secretRef:
         name: yas-keycloak-credentials-secret
