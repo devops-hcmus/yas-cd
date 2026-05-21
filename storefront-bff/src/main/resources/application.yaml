@@ -13,7 +13,7 @@ spring:
       client:
         provider:
           keycloak:
-            issuer-uri: http://identity/realms/Yas
+            issuer-uri: http://identity.keycloak.svc.cluster.local/realms/Yas
         registration:
           keycloak:
             provider: keycloak
@@ -52,4 +52,4 @@ yas:
   services:
     customer: http://api.yas.local/customer
     cart: http://api.yas.local/cart
-    token-identity: http://identity/realms/Yas/protocol/openid-connect/token
+    token-identity: http://identity.keycloak.svc.cluster.local/realms/Yas/protocol/openid-connect/token

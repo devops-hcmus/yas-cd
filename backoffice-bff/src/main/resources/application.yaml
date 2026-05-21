@@ -13,7 +13,7 @@ spring:
       client:
         provider:
           keycloak:
-            issuer-uri: http://identity/realms/Yas
+            issuer-uri: http://identity.keycloak.svc.cluster.local/realms/Yas
         registration:
           api-client:
             provider: keycloak
