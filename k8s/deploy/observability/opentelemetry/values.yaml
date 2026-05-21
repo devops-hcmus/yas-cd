@@ -39,7 +39,4 @@ opentelemetryCollectorConfig:
         receivers: [otlp]
         processors: [batch]
         exporters: [otlphttp]
-      metrics:
-        receivers: [otlp]
-        processors: [batch]
-        exporters: [logging]
+      # Metric: app dùng Prometheus scrape /actuator/prometheus, không push OTLP (yas-configuration: otlp.metrics.export.enabled=false)
