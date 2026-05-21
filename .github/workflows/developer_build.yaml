@@ -388,15 +388,31 @@ jobs:
             - name: Deploy Nginx API Gateway (NodePort)
               run: |
                   NS="${{ env.TARGET_NAMESPACE }}"
+                  echo "🚀 Deploying nginx to namespace: $NS"
+
                   # Render nginx-api-gateway.yaml with correct namespace and DNS
                   sed \
-                    -e "s/namespace: yas/namespace: $NS/g" \
-                    -e "s/\.yas\.svc\.cluster\.local/.$NS.svc.cluster.local/g" \
-                    k8s/deploy/nginx-api-gateway.yaml | kubectl apply -f -
+                    -e "s|namespace: yas|namespace: ${NS}|g" \
+                    -e "s|\.yas\.svc\.cluster\.local|.${NS}.svc.cluster.local|g" \
+                    k8s/deploy/nginx-api-gateway.yaml | kubectl apply -f - || {
+                      echo "❌ Failed to apply nginx configuration"
+                      exit 1
+                    }
+
+                  echo "⏳ Waiting for nginx deployment..."
+                  sleep 2
 
                   # Patch service to NodePort so developer can access APIs
                   kubectl patch svc nginx -n "$NS" \
-                    -p '{"spec":{"type":"NodePort"}}'
+                    -p '{"spec":{"type":"NodePort"}}' || {
+                      echo "❌ Failed to patch nginx service"
+                      exit 1
+                    }
+
+                  # Verify deployment
+                  echo "✅ Nginx deployed successfully in namespace: $NS"
+                  kubectl get deployment nginx -n "$NS"
+                  kubectl get svc nginx -n "$NS"
 
             - name: Wait for Rollout
               run: |
