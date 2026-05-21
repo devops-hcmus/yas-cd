@@ -39,7 +39,7 @@ backend:
         - name: MANAGEMENT_OTLP_TRACING_ENDPOINT
           value: http://opentelemetry-collector.observability:4318/v1/traces
         - name: MANAGEMENT_OTLP_METRICS_EXPORT_ENABLED
-          value: "false"
+          value: "true"
 
     extraEnvFroms:
         - secretRef:

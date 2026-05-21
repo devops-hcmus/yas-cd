@@ -39,3 +39,7 @@ opentelemetryCollectorConfig:
         receivers: [otlp]
         processors: [batch]
         exporters: [otlphttp]
+      metrics:
+        receivers: [otlp]
+        processors: [batch]
+        exporters: [logging]
