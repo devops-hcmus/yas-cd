@@ -1,116 +1,135 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: nginx-api-config
-  namespace: yas
+    name: nginx-api-config
+    namespace: yas
 data:
-  default.conf: |
-    server {
-      listen 80;
+    default.conf: |
+        server {
+          listen 80;
 
-      # Kubernetes CoreDNS
-      resolver 10.96.0.10 valid=10s;
+          # Kubernetes CoreDNS
+          resolver 10.96.0.10 valid=10s;
 
-      location /media/ {
-        set $upstream "media.yas.svc.cluster.local";
-        proxy_pass http://$upstream;
-      }
-      location /product/ {
-        set $upstream "product.yas.svc.cluster.local";
-        proxy_pass http://$upstream;
-      }
-      location /customer/ {
-        set $upstream "customer.yas.svc.cluster.local";
-        proxy_pass http://$upstream;
-      }
-      location /cart/ {
-        set $upstream "cart.yas.svc.cluster.local";
-        proxy_pass http://$upstream;
-      }
-      location /rating/ {
-        set $upstream "rating.yas.svc.cluster.local";
-        proxy_pass http://$upstream;
-      }
-      location /order/ {
-        set $upstream "order.yas.svc.cluster.local";
-        proxy_pass http://$upstream;
-      }
-      location /location/ {
-        set $upstream "location.yas.svc.cluster.local";
-        proxy_pass http://$upstream;
-      }
-      location /inventory/ {
-        set $upstream "inventory.yas.svc.cluster.local";
-        proxy_pass http://$upstream;
-      }
-      location /tax/ {
-        set $upstream "tax.yas.svc.cluster.local";
-        proxy_pass http://$upstream;
-      }
-      location /promotion/ {
-        set $upstream "promotion.yas.svc.cluster.local";
-        proxy_pass http://$upstream;
-      }
-      location /search/ {
-        set $upstream "search.yas.svc.cluster.local";
-        proxy_pass http://$upstream;
-      }
-      location /payment/ {
-        set $upstream "payment.yas.svc.cluster.local";
-        proxy_pass http://$upstream;
-      }
-      location /webhook/ {
-        set $upstream "webhook.yas.svc.cluster.local";
-        proxy_pass http://$upstream;
-      }
-      location /sampledata/ {
-        set $upstream "sampledata.yas.svc.cluster.local";
-        proxy_pass http://$upstream;
-      }
-      location /recommendation/ {
-        set $upstream "recommendation.yas.svc.cluster.local";
-        proxy_pass http://$upstream;
-      }
-    }
+          # Proxy settings to prevent upstream connection issues
+          proxy_connect_timeout 60s;
+          proxy_send_timeout 60s;
+          proxy_read_timeout 60s;
+          proxy_buffering on;
+          proxy_buffer_size 128k;
+          proxy_buffers 4 256k;
+          proxy_busy_buffers_size 256k;
+          proxy_max_temp_file_size 2048m;
+          proxy_temp_file_write_size 256k;
+          
+          # Enable keepalive to upstream servers
+          keepalive_timeout 65s;
+          proxy_http_version 1.1;
+          proxy_set_header Connection "";
+          # Error handling
+          proxy_next_upstream error timeout http_502 http_503 http_504;
+          proxy_next_upstream_tries 2;
+
+          location /media/ {
+            set $upstream "media.yas.svc.cluster.local";
+            proxy_pass http://$upstream;
+          }
+          location /product/ {
+            set $upstream "product.yas.svc.cluster.local";
+            proxy_pass http://$upstream;
+          }
+          location /customer/ {
+            set $upstream "customer.yas.svc.cluster.local";
+            proxy_pass http://$upstream;
+          }
+          location /cart/ {
+            set $upstream "cart.yas.svc.cluster.local";
+            proxy_pass http://$upstream;
+          }
+          location /rating/ {
+            set $upstream "rating.yas.svc.cluster.local";
+            proxy_pass http://$upstream;
+          }
+          location /order/ {
+            set $upstream "order.yas.svc.cluster.local";
+            proxy_pass http://$upstream;
+          }
+          location /location/ {
+            set $upstream "location.yas.svc.cluster.local";
+            proxy_pass http://$upstream;
+          }
+          location /inventory/ {
+            set $upstream "inventory.yas.svc.cluster.local";
+            proxy_pass http://$upstream;
+          }
+          location /tax/ {
+            set $upstream "tax.yas.svc.cluster.local";
+            proxy_pass http://$upstream;
+          }
+          location /promotion/ {
+            set $upstream "promotion.yas.svc.cluster.local";
+            proxy_pass http://$upstream;
+          }
+          location /search/ {
+            set $upstream "search.yas.svc.cluster.local";
+            proxy_pass http://$upstream;
+          }
+          location /payment/ {
+            set $upstream "payment.yas.svc.cluster.local";
+            proxy_pass http://$upstream;
+          }
+          location /webhook/ {
+            set $upstream "webhook.yas.svc.cluster.local";
+            proxy_pass http://$upstream;
+          }
+          location /sampledata/ {
+            set $upstream "sampledata.yas.svc.cluster.local";
+            proxy_pass http://$upstream;
+          }
+          location /recommendation/ {
+            set $upstream "recommendation.yas.svc.cluster.local";
+            proxy_pass http://$upstream;
+          }
+        }
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nginx
-  namespace: yas
+    name: nginx
+    namespace: yas
 spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: nginx
-  template:
-    metadata:
-      labels:
-        app: nginx
-    spec:
-      containers:
-        - name: nginx
-          image: nginx:1.25-alpine
-          ports:
-            - containerPort: 80
-              name: http
-          volumeMounts:
-            - name: config
-              mountPath: /etc/nginx/conf.d
-      volumes:
-        - name: config
-          configMap:
-            name: nginx-api-config
+    replicas: 1
+    selector:
+        matchLabels:
+            app: nginx
+    template:
+        metadata:
+            labels:
+                app: nginx
+        spec:
+            containers:
+                - name: nginx
+                  image: nginx:1.25-alpine
+                  ports:
+                      - containerPort: 80
+                        name: http
+                  volumeMounts:
+                      - name: config
+                        mountPath: /etc/nginx/conf.d
+            volumes:
+                - name: config
+                  configMap:
+                      name: nginx-api-config
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: nginx
-  namespace: yas
+    name: nginx
+    namespace: yas
 spec:
-  selector:
-    app: nginx
-  ports:
-    - port: 80
-      targetPort: 80
-      name: http
+    selector:
+        app: nginx
+    ports:
+        - port: 80
+          targetPort: 80
+          name: http
