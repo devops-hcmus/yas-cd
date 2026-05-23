@@ -336,11 +336,22 @@ jobs:
                       --set backend.image.tag="$tag" || true
                   }
 
+                  deploy_media() {
+                    local media_tag=$1 sampledata_tag=$2
+                    echo "Deploying media (tag: $media_tag, sampledata init: $sampledata_tag)..."
+                    helm upgrade --install media k8s/charts/media \
+                      --namespace "$NS" \
+                      --set backend.image.repository="${REPO}/yas-media" \
+                      --set backend.image.tag="$media_tag" \
+                      --set backend.initContainers[0].image="${REPO}/yas-sampledata:${sampledata_tag}" || true
+                  }
+
                   deploy_backend cart "${{ needs.get-commit-ids.outputs.cart_tag }}"
                   deploy_backend customer "${{ needs.get-commit-ids.outputs.customer_tag }}"
                   deploy_backend inventory "${{ needs.get-commit-ids.outputs.inventory_tag }}"
                   # deploy_backend location "${{ needs.get-commit-ids.outputs.location_tag }}"
-                  deploy_backend media "${{ needs.get-commit-ids.outputs.media_tag }}"
+                  deploy_backend sampledata "${{ needs.get-commit-ids.outputs.sampledata_tag }}"
+                  deploy_media "${{ needs.get-commit-ids.outputs.media_tag }}" "${{ needs.get-commit-ids.outputs.sampledata_tag }}"
                   deploy_backend order "${{ needs.get-commit-ids.outputs.order_tag }}"
                   # deploy_backend payment "${{ needs.get-commit-ids.outputs.payment_tag }}"
                   deploy_backend payment-paypal "${{ needs.get-commit-ids.outputs.payment_paypal_tag }}"
@@ -351,7 +362,6 @@ jobs:
                   deploy_backend search "${{ needs.get-commit-ids.outputs.search_tag }}"
                   deploy_backend tax "${{ needs.get-commit-ids.outputs.tax_tag }}"
                   # deploy_backend webhook "${{ needs.get-commit-ids.outputs.webhook_tag }}"
-                  deploy_backend sampledata "${{ needs.get-commit-ids.outputs.sampledata_tag }}"
 
             - name: Deploy BFF Services (NodePort)
               run: |
