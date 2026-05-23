@@ -310,9 +310,13 @@ jobs:
 
             - name: Deploy Configuration (ConfigMaps & Secrets)
               run: |
+                  NS="${{ env.TARGET_NAMESPACE }}"
                   echo "Deploying yas-configuration chart..."
+                  # Override mediaApplicationConfig.yas.publicUrl to use nginx internal DNS
+                  # This allows media service URLs to be accessible through nginx proxy
                   helm upgrade --install yas-configuration k8s/charts/yas-configuration \
-                    --namespace ${{ env.TARGET_NAMESPACE }} || {
+                    --namespace "$NS" \
+                    --set "mediaApplicationConfig.yas.publicUrl=http://nginx.${NS}.svc.cluster.local/media" || {
                       echo "Failed to deploy yas-configuration"
                       exit 1
                     }
@@ -332,11 +336,11 @@ jobs:
                       --set backend.image.tag="$tag" || true
                   }
 
+                  # Deploy regular backend services
                   deploy_backend cart "${{ needs.get-commit-ids.outputs.cart_tag }}"
                   deploy_backend customer "${{ needs.get-commit-ids.outputs.customer_tag }}"
                   deploy_backend inventory "${{ needs.get-commit-ids.outputs.inventory_tag }}"
                   # deploy_backend location "${{ needs.get-commit-ids.outputs.location_tag }}"
-                  deploy_backend media "${{ needs.get-commit-ids.outputs.media_tag }}"
                   deploy_backend order "${{ needs.get-commit-ids.outputs.order_tag }}"
                   deploy_backend payment "${{ needs.get-commit-ids.outputs.payment_tag }}"
                   deploy_backend payment-paypal "${{ needs.get-commit-ids.outputs.payment_paypal_tag }}"
@@ -348,6 +352,24 @@ jobs:
                   deploy_backend tax "${{ needs.get-commit-ids.outputs.tax_tag }}"
                   # deploy_backend webhook "${{ needs.get-commit-ids.outputs.webhook_tag }}"
                   deploy_backend sampledata "${{ needs.get-commit-ids.outputs.sampledata_tag }}"
+
+                  # Deploy media with sample images initialization (initContainers for media image setup)
+                  echo "Deploying media with sample images (tag: ${{ needs.get-commit-ids.outputs.media_tag }})..."
+                  helm upgrade --install media k8s/charts/media \
+                    --namespace "$NS" \
+                    --set backend.image.repository="${REPO}/yas-media" \
+                    --set backend.image.tag="${{ needs.get-commit-ids.outputs.media_tag }}" \
+                    --set 'backend.initContainers[0].name=copy-sample-images' \
+                    --set 'backend.initContainers[0].image='"${REPO}/yas-sampledata:${{ needs.get-commit-ids.outputs.sampledata_tag }}" \
+                    --set 'backend.initContainers[0].command[0]=sh' \
+                    --set 'backend.initContainers[0].command[1]=-c' \
+                    --set 'backend.initContainers[0].command[2]=cp -r /sample-images/sample /images/ && echo "Images copied"' \
+                    --set 'backend.initContainers[0].volumeMounts[0].name=media-images' \
+                    --set 'backend.initContainers[0].volumeMounts[0].mountPath=/images' \
+                    --set 'backend.extraVolumes[1].name=media-images' \
+                    --set 'backend.extraVolumes[1].emptyDir={}' \
+                    --set 'backend.extraVolumeMounts[1].name=media-images' \
+                    --set 'backend.extraVolumeMounts[1].mountPath=/images' || true
 
             - name: Deploy BFF Services (NodePort)
               run: |
