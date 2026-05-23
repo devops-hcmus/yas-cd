@@ -46,6 +46,10 @@ spec:
           to:
               - operation:
                     ports: ["80"]
+        # Allow Kubernetes health checks (kubelet probes on metric port)
+        - to:
+              - operation:
+                    ports: ["8090"]
 
 ---
 # --- ALLOW: Cart Service ---
@@ -70,6 +74,10 @@ spec:
           to:
               - operation:
                     ports: ["80"]
+        # Allow Kubernetes health checks (kubelet probes on metric port)
+        - to:
+              - operation:
+                    ports: ["8090"]
 
 ---
 # --- ALLOW: Order Service ---
@@ -94,6 +102,10 @@ spec:
           to:
               - operation:
                     ports: ["80"]
+        # Allow Kubernetes health checks (kubelet probes on metric port)
+        - to:
+              - operation:
+                    ports: ["8090"]
 
 ---
 # --- ALLOW: Payment Service (restricted) ---
@@ -116,6 +128,10 @@ spec:
           to:
               - operation:
                     ports: ["80"]
+        # Allow Kubernetes health checks (kubelet probes on metric port)
+        - to:
+              - operation:
+                    ports: ["8090"]
 
 ---
 # --- ALLOW: Customer Service ---
@@ -141,6 +157,10 @@ spec:
           to:
               - operation:
                     ports: ["80"]
+        # Allow Kubernetes health checks (kubelet probes on metric port)
+        - to:
+              - operation:
+                    ports: ["8090"]
 
 ---
 # --- ALLOW: Inventory Service ---
@@ -167,6 +187,10 @@ spec:
           to:
               - operation:
                     ports: ["80"]
+        # Allow Kubernetes health checks (kubelet probes on metric port)
+        - to:
+              - operation:
+                    ports: ["8090"]
 
 ---
 # --- ALLOW: Media Service ---
@@ -192,6 +216,10 @@ spec:
           to:
               - operation:
                     ports: ["80"]
+        # Allow Kubernetes health checks (kubelet probes on metric port)
+        - to:
+              - operation:
+                    ports: ["8090"]
 
 ---
 # --- ALLOW: Location Service ---
@@ -217,6 +245,10 @@ spec:
           to:
               - operation:
                     ports: ["80"]
+        # Allow Kubernetes health checks (kubelet probes on metric port)
+        - to:
+              - operation:
+                    ports: ["8090"]
 
 ---
 # --- ALLOW: Tax Service ---
@@ -242,6 +274,10 @@ spec:
           to:
               - operation:
                     ports: ["80"]
+        # Allow Kubernetes health checks (kubelet probes on metric port)
+        - to:
+              - operation:
+                    ports: ["8090"]
 
 ---
 # --- ALLOW: Promotion Service ---
@@ -268,6 +304,10 @@ spec:
           to:
               - operation:
                     ports: ["80"]
+        # Allow Kubernetes health checks (kubelet probes on metric port)
+        - to:
+              - operation:
+                    ports: ["8090"]
 
 ---
 # --- ALLOW: Rating Service ---
@@ -293,6 +333,10 @@ spec:
           to:
               - operation:
                     ports: ["80"]
+        # Allow Kubernetes health checks (kubelet probes on metric port)
+        - to:
+              - operation:
+                    ports: ["8090"]
 
 ---
 # --- ALLOW: Search Service ---
@@ -316,6 +360,10 @@ spec:
           to:
               - operation:
                     ports: ["80"]
+        # Allow Kubernetes health checks (kubelet probes on metric port)
+        - to:
+              - operation:
+                    ports: ["8090"]
 
 ---
 # --- ALLOW: Recommendation Service ---
@@ -339,6 +387,10 @@ spec:
           to:
               - operation:
                     ports: ["80"]
+        # Allow Kubernetes health checks (kubelet probes on metric port)
+        - to:
+              - operation:
+                    ports: ["8090"]
 
 ---
 # --- ALLOW: Webhook Service ---
@@ -363,6 +415,10 @@ spec:
           to:
               - operation:
                     ports: ["80"]
+        # Allow Kubernetes health checks (kubelet probes on metric port)
+        - to:
+              - operation:
+                    ports: ["8090"]
 
 ---
 # --- ALLOW: Sampledata Service ---
@@ -385,6 +441,10 @@ spec:
           to:
               - operation:
                     ports: ["80"]
+        # Allow Kubernetes health checks (kubelet probes on metric port)
+        - to:
+              - operation:
+                    ports: ["8090"]
 
 ---
 # --- ALLOW: Storefront-BFF ---
@@ -409,6 +469,10 @@ spec:
           to:
               - operation:
                     ports: ["80"]
+        # Allow Kubernetes health checks (kubelet probes on metric port)
+        - to:
+              - operation:
+                    ports: ["8090"]
 
 ---
 # --- ALLOW: Backoffice-BFF ---
@@ -433,6 +497,10 @@ spec:
           to:
               - operation:
                     ports: ["80"]
+        # Allow Kubernetes health checks (kubelet probes on metric port)
+        - to:
+              - operation:
+                    ports: ["8090"]
 
 ---
 # --- ALLOW: Nginx API Gateway ---

@@ -54,9 +54,11 @@ spec:
         - operation:
             ports: ["{{ $.Values.metricPort }}"]
     # Allow Kubernetes health checks (kubelet probes on metric port)
+    # This rule explicitly allows all traffic to metric port for health checks
     - to:
         - operation:
             ports: ["{{ $.Values.metricPort }}"]
+            protocols: ["http"]
 ---
 {{- end }}
 
@@ -103,9 +105,11 @@ spec:
         - operation:
             ports: ["{{ $.Values.metricPort }}"]
     # Allow Kubernetes health checks (kubelet probes on metric port)
+    # This rule explicitly allows all traffic to metric port for health checks
     - to:
         - operation:
             ports: ["{{ $.Values.metricPort }}"]
+            protocols: ["http"]
 ---
 {{- end }}
 
