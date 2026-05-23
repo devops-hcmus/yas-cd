@@ -35,7 +35,7 @@ spec:
         # Nginx API Gateway (default SA)
         - source:
             principals:
-              - "cluster.local/ns/{{ $.Release.Namespace }}/sa/default"
+              - "cluster.local/ns/{{ $.Release.Namespace }}/sa/default"    
         {{- range .allowedCallers }}
         # {{ . }}
         - source:
@@ -51,6 +51,10 @@ spec:
             namespaces:
               - "{{ $.Values.observabilityNamespace }}"
       to:
+        - operation:
+            ports: ["{{ $.Values.metricPort }}"]
+    # Allow Kubernetes health checks (kubelet probes on metric port)
+    - to:
         - operation:
             ports: ["{{ $.Values.metricPort }}"]
 ---
@@ -96,6 +100,10 @@ spec:
             namespaces:
               - "{{ $.Values.observabilityNamespace }}"
       to:
+        - operation:
+            ports: ["{{ $.Values.metricPort }}"]
+    # Allow Kubernetes health checks (kubelet probes on metric port)
+    - to:
         - operation:
             ports: ["{{ $.Values.metricPort }}"]
 ---
