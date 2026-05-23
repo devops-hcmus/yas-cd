@@ -13,7 +13,7 @@ on:
 jobs:
   Build:
     outputs:
-      image-tag: ${{ steps.meta.outputs.version }}
+      image-tag: ${{ steps.image_tag.outputs.tag }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -40,6 +40,10 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
 
+      - name: Image tag
+        id: image_tag
+        run: echo "tag=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+
   update-gitops:
     needs: Build
     if: github.ref == 'refs/heads/main'
@@ -47,7 +51,7 @@ jobs:
     with:
       service: customer
       env: dev
-      tag: ${{ needs.Build.outputs.image-tag }}
       values-key: backend
+      tag: ${{ needs.Build.outputs.image-tag }}
     secrets:
       gitops_pat: ${{ secrets.GITOPS_PAT }}
