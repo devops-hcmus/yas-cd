@@ -51,6 +51,29 @@ spec:
 ---
 {{- end }}
 
+# ============================================================
+# ALLOW PERMISSIVE CHO BACKEND SERVICES (CẦN CHO HEALTH CHECKS)
+# ============================================================
+# Backend services cần PERMISSIVE mode để kubelet health checks
+# có thể gửi non-mTLS traffic (kubelet không có mTLS certificates).
+# Service-to-service traffic vẫn được bảo vệ bởi DestinationRule ISTIO_MUTUAL
+{{- range .Values.backendServices }}
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: {{ .name }}-permissive
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "service-mesh.labels" $ | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ .name }}
+  mtls:
+    mode: PERMISSIVE
+---
+{{- end }}
+
 {{- if .Values.nginxGateway.enabled }}
 apiVersion: security.istio.io/v1beta1
 kind: PeerAuthentication
