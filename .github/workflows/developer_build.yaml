@@ -325,8 +325,11 @@ jobs:
             - name: Deploy Configuration (ConfigMaps & Secrets)
               run: |
                   echo "Deploying yas-configuration chart..."
+                  # Relative publicUrl so browser loads images via storefront-bff (/api/media → media service).
+                  # Default http://api.yas.local.com/media is unreachable in developer NodePort setup.
                   helm upgrade --install yas-configuration k8s/charts/yas-configuration \
-                    --namespace ${{ env.TARGET_NAMESPACE }} || {
+                    --namespace ${{ env.TARGET_NAMESPACE }} \
+                    --set mediaApplicationConfig.yas.publicUrl=/api/media || {
                       echo "Failed to deploy yas-configuration"
                       exit 1
                     }
@@ -540,6 +543,8 @@ jobs:
                   echo "|-------------|-----------|-------------|" >> $GITHUB_STEP_SUMMARY
                   echo "| 🏪 Storefront | \`http://localhost:${STOREFRONT_BFF_NP}\` | Customer-facing storefront (via BFF gateway) |" >> $GITHUB_STEP_SUMMARY
                   echo "| 🔧 Backoffice | \`http://localhost:${BACKOFFICE_BFF_NP}\` | Admin backoffice panel (via BFF gateway) |" >> $GITHUB_STEP_SUMMARY
+                  echo "" >> $GITHUB_STEP_SUMMARY
+                  echo "> Product images are served at \`/api/media/medias/...\` through the storefront BFF. Do not use \`api.yas.local.com\` unless you also tunnel nginx NodePort (\`${{ steps.nodeports.outputs.nginx_np }}\`) and add it to hosts." >> $GITHUB_STEP_SUMMARY
                   echo "" >> $GITHUB_STEP_SUMMARY
 
                   cat >> $GITHUB_STEP_SUMMARY << 'DETAILS'
