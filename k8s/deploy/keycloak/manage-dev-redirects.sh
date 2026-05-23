@@ -99,9 +99,17 @@ keycloak_token() {
   echo "$token"
 }
 
+curl_keycloak() {
+  if [ -z "${KEYCLOAK_URL:-}" ]; then
+    echo "ERROR: KEYCLOAK_URL is not set (call ensure_keycloak_url first)"
+    exit 1
+  fi
+  curl "$@"
+}
+
 client_uuid() {
   local token=$1 client_id=$2
-  curl -sf "${KEYCLOAK_URL}/admin/realms/${KEYCLOAK_REALM}/clients?clientId=${client_id}" \
+  curl_keycloak -sf "${KEYCLOAK_URL}/admin/realms/${KEYCLOAK_REALM}/clients?clientId=${client_id}" \
     -H "Authorization: Bearer ${token}" \
     | jq -r '.[0].id // empty'
 }
@@ -119,7 +127,7 @@ update_client_redirects() {
   fi
 
   local client_json new_redirects
-  client_json=$(curl -sf "${KEYCLOAK_URL}/admin/realms/${KEYCLOAK_REALM}/clients/${uuid}" \
+  client_json=$(curl_keycloak -sf "${KEYCLOAK_URL}/admin/realms/${KEYCLOAK_REALM}/clients/${uuid}" \
     -H "Authorization: Bearer ${token}")
 
   if [ "$mode" = "add" ]; then
@@ -131,7 +139,7 @@ update_client_redirects() {
   fi
 
   echo "$client_json" | jq --argjson redirects "$new_redirects" '.redirectUris = $redirects' \
-    | curl -sf -X PUT "${KEYCLOAK_URL}/admin/realms/${KEYCLOAK_REALM}/clients/${uuid}" \
+    | curl_keycloak -sf -X PUT "${KEYCLOAK_URL}/admin/realms/${KEYCLOAK_REALM}/clients/${uuid}" \
       -H "Authorization: Bearer ${token}" \
       -H "Content-Type: application/json" \
       -d @- >/dev/null
@@ -167,6 +175,7 @@ cmd_register() {
   build_redirect_uris "$storefront_port" "$backoffice_port" "$worker_ip"
 
   echo "Registering Keycloak redirect URIs for namespace $ns..."
+  ensure_keycloak_url
   local token
   token=$(keycloak_token)
 
@@ -213,6 +222,7 @@ cmd_unregister() {
   fi
 
   echo "Removing Keycloak redirect URIs for namespace $ns..."
+  ensure_keycloak_url
   token=$(keycloak_token)
 
   if [ "${#sf_uris[@]}" -gt 0 ]; then
