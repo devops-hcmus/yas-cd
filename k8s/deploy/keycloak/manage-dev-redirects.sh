@@ -5,7 +5,10 @@ set -euo pipefail
 KEYCLOAK_NS="${KEYCLOAK_NS:-keycloak}"
 KEYCLOAK_SVC="${KEYCLOAK_SVC:-keycloak-service}"
 KEYCLOAK_REALM="${KEYCLOAK_REALM:-Yas}"
-KEYCLOAK_URL="${KEYCLOAK_URL:-http://${KEYCLOAK_SVC}.${KEYCLOAK_NS}.svc.cluster.local}"
+# Set KEYCLOAK_URL explicitly to skip port-forward (e.g. when running inside the cluster).
+KEYCLOAK_URL="${KEYCLOAK_URL:-}"
+KEYCLOAK_PF_PORT="${KEYCLOAK_PF_PORT:-}"
+KEYCLOAK_PF_PID=""
 CONFIGMAP_NAME="${CONFIGMAP_NAME:-developer-keycloak-redirects}"
 
 usage() {
@@ -23,21 +26,77 @@ require_cmd() {
   command -v "$1" >/dev/null 2>&1 || { echo "ERROR: '$1' is required"; exit 1; }
 }
 
+stop_keycloak_port_forward() {
+  if [ -n "$KEYCLOAK_PF_PID" ]; then
+    kill "$KEYCLOAK_PF_PID" 2>/dev/null || true
+    wait "$KEYCLOAK_PF_PID" 2>/dev/null || true
+    KEYCLOAK_PF_PID=""
+  fi
+}
+
+# Self-hosted runners often cannot resolve *.svc.cluster.local or reach ClusterIP directly.
+ensure_keycloak_url() {
+  if [ -n "$KEYCLOAK_URL" ]; then
+    return 0
+  fi
+
+  if ! kubectl get svc "$KEYCLOAK_SVC" -n "$KEYCLOAK_NS" &>/dev/null; then
+    echo "ERROR: Keycloak service $KEYCLOAK_SVC not found in $KEYCLOAK_NS"
+    exit 1
+  fi
+
+  KEYCLOAK_PF_PORT=$((18080 + RANDOM % 1000))
+  echo "Starting kubectl port-forward to Keycloak on 127.0.0.1:${KEYCLOAK_PF_PORT}..."
+  kubectl port-forward -n "$KEYCLOAK_NS" "svc/${KEYCLOAK_SVC}" "${KEYCLOAK_PF_PORT}:80" >/dev/null 2>&1 &
+  KEYCLOAK_PF_PID=$!
+  trap stop_keycloak_port_forward EXIT
+
+  local i
+  for i in $(seq 1 25); do
+    if curl -sf -m 2 "http://127.0.0.1:${KEYCLOAK_PF_PORT}/realms/master" >/dev/null 2>&1; then
+      KEYCLOAK_URL="http://127.0.0.1:${KEYCLOAK_PF_PORT}"
+      echo "Using Keycloak Admin API at $KEYCLOAK_URL"
+      return 0
+    fi
+    sleep 1
+  done
+
+  echo "ERROR: Keycloak port-forward did not become ready (see kubectl port-forward)"
+  exit 1
+}
+
 keycloak_token() {
-  local user pass
+  ensure_keycloak_url
+
+  local user pass response http_code
   user=$(kubectl get secret keycloak-credentials -n "$KEYCLOAK_NS" -o jsonpath='{.data.username}' 2>/dev/null | base64 -d)
   pass=$(kubectl get secret keycloak-credentials -n "$KEYCLOAK_NS" -o jsonpath='{.data.password}' 2>/dev/null | base64 -d)
   if [ -z "$user" ] || [ -z "$pass" ]; then
     echo "ERROR: cannot read keycloak-credentials secret in namespace $KEYCLOAK_NS"
     exit 1
   fi
-  curl -sf -X POST "${KEYCLOAK_URL}/realms/master/protocol/openid-connect/token" \
+
+  response=$(curl -sS -m 30 -w "\n%{http_code}" -X POST "${KEYCLOAK_URL}/realms/master/protocol/openid-connect/token" \
     -H "Content-Type: application/x-www-form-urlencoded" \
     -d "username=${user}" \
     -d "password=${pass}" \
     -d "grant_type=password" \
-    -d "client_id=admin-cli" \
-    | jq -r '.access_token'
+    -d "client_id=admin-cli")
+  http_code=$(echo "$response" | tail -n1)
+  response=$(echo "$response" | sed '$d')
+
+  if [ "$http_code" != "200" ]; then
+    echo "ERROR: Keycloak token request failed (HTTP $http_code): $response"
+    exit 1
+  fi
+
+  local token
+  token=$(echo "$response" | jq -r '.access_token // empty')
+  if [ -z "$token" ] || [ "$token" = "null" ]; then
+    echo "ERROR: Keycloak token response missing access_token"
+    exit 1
+  fi
+  echo "$token"
 }
 
 client_uuid() {
