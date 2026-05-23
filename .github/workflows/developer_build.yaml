@@ -312,11 +312,72 @@ jobs:
               run: |
                   NS="${{ env.TARGET_NAMESPACE }}"
                   echo "Deploying yas-configuration chart..."
-                  # Override mediaApplicationConfig.yas.publicUrl to use nginx internal DNS
-                  # This allows media service URLs to be accessible through nginx proxy
+
+                  # Create values file to override Keycloak URLs for developer namespace
+                  cat > /tmp/dev-config-overrides.yaml <<'EOF'
+                  mediaApplicationConfig:
+                    yas:
+                      publicUrl: http://nginx.${NS}.svc.cluster.local/media
+
+                  applicationConfig:
+                    spring:
+                      security:
+                        oauth2:
+                          resourceserver:
+                            jwt:
+                              issuer-uri: http://keycloak-service.keycloak:8080/realms/Yas
+                    springdoc:
+                      oauthflow:
+                        authorization-url: http://keycloak-service.keycloak:8080/realms/Yas/protocol/openid-connect/auth
+                        token-url: http://keycloak-service.keycloak:8080/realms/Yas/protocol/openid-connect/token
+
+                  backofficeBffExtraConfig:
+                    spring:
+                      data:
+                        redis:
+                          host: redis-master.redis
+                          password: ${REDIS_PASSWORD}
+                          port: 6379
+                      security:
+                        oauth2:
+                          client:
+                            provider:
+                              keycloak:
+                                issuer-uri: http://keycloak-service.keycloak:8080/realms/Yas
+                            registration:
+                              api-client:
+                                provider: keycloak
+                                client-id: backoffice-bff
+                                client-secret: ${KEYCLOAK_BACKOFFICE_BFF_CLIENT_SECRET}
+                                scope: openid, profile, email, roles
+
+                  storefrontBffExtraConfig:
+                    spring:
+                      data:
+                        redis:
+                          host: redis-master.redis
+                          password: ${REDIS_PASSWORD}
+                          port: 6379
+                      security:
+                        oauth2:
+                          client:
+                            provider:
+                              keycloak:
+                                issuer-uri: http://keycloak-service.keycloak:8080/realms/Yas
+                            registration:
+                              api-client:
+                                provider: keycloak
+                                client-id: storefront-bff
+                                client-secret: ${KEYCLOAK_STOREFRONT_BFF_CLIENT_SECRET}
+                                scope: openid, profile, email, roles
+                  EOF
+
+                  # Replace ${NS} placeholder in the YAML file
+                  sed -i "s|\${NS}|${NS}|g" /tmp/dev-config-overrides.yaml
+
                   helm upgrade --install yas-configuration k8s/charts/yas-configuration \
                     --namespace "$NS" \
-                    --set "mediaApplicationConfig.yas.publicUrl=http://nginx.${NS}.svc.cluster.local/media" || {
+                    -f /tmp/dev-config-overrides.yaml || {
                       echo "Failed to deploy yas-configuration"
                       exit 1
                     }
