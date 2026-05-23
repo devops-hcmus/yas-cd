@@ -5,13 +5,13 @@
 replicaCount: 1
 
 strategy:
-  type: Recreate
+    type: Recreate
 
 image:
-  repository: ""
-  pullPolicy: IfNotPresent
-  # Overrides the image tag whose default is the chart appVersion.
-  tag: ""
+    repository: ""
+    pullPolicy: IfNotPresent
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: ""
 
 imagePullSecrets: []
 nameOverride: ""
@@ -24,26 +24,26 @@ fullnameOverride: ""
 hostAliases: []
 
 serviceAccount:
-  # Specifies whether a service account should be created
-  create: true
-  # Annotations to add to the service account
-  annotations: {}
-  # The name of the service account to use.
-  # If not set and create is true, a name is generated using the fullname template
-  name: ""
+    # Specifies whether a service account should be created
+    create: true
+    # Annotations to add to the service account
+    annotations: {}
+    # The name of the service account to use.
+    # If not set and create is true, a name is generated using the fullname template
+    name: ""
 
 podAnnotations: {}
 
 podSecurityContext: {}
-  # fsGroup: 2000
+    # fsGroup: 2000
 
 securityContext: {}
-  # capabilities:
-  #   drop:
-  #   - ALL
-  # readOnlyRootFilesystem: true
-  # runAsNonRoot: true
-  # runAsUser: 1000
+    # capabilities:
+    #   drop:
+    #   - ALL
+    # readOnlyRootFilesystem: true
+    # runAsNonRoot: true
+    # runAsUser: 1000
 logbackXmlPath: /opt/yas/config/logback.xml
 httpPort: 80
 metricPort: 8090
@@ -51,9 +51,9 @@ databaseConnectionUrl: jdbc:postgresql://postgresql.postgres:5432
 databaseName: postgres
 
 deployment:
-  annotations:
-    reloader.stakater.com/search: "true"
-  extraAnnotations: []
+    annotations:
+        reloader.stakater.com/search: "true"
+    extraAnnotations: []
 
 extraEnvs: []
 #  - name: EXTRA_VARIABLE_NAME
@@ -84,12 +84,12 @@ extraVolumes: []
 #      name: example-extra-configmap
 
 initContainers:
-  - name: wait-for-postgres
-    image: busybox:stable
-    command:
-      - sh
-      - -c
-      - until nc -z postgresql.postgres 5432; do echo "Waiting for postgres..."; sleep 3; done; echo "Postgres is ready"
+    - name: wait-for-postgres
+      image: busybox:stable
+      command:
+          - sh
+          - -c
+          - until nc -z postgresql.postgres 5432; do echo "Waiting for postgres..."; sleep 3; done; echo "Postgres is ready"
 
 extraVolumeMounts: []
 #  - mountPath: /example-path
@@ -99,75 +99,77 @@ extraApplicationConfigPaths: []
 #  - /opt/config/application-example.yaml
 
 lifecycle:
-  preStop:
-    exec:
-      command: ["sh", "-c", "sleep 10"]
+    preStop:
+        exec:
+            command: ["sh", "-c", "sleep 10"]
 
 terminationGracePeriodSeconds: 45
 
 startupProbe:
-  httpGet:
-    path: /actuator/health/liveness
-    port: http-metric
-  initialDelaySeconds: 60
-  periodSeconds: 10
-  failureThreshold: 60
-  successThreshold: 1
+    httpGet:
+        path: /actuator/health/liveness
+        port: http-metric
+    initialDelaySeconds: 60
+    periodSeconds: 10
+    failureThreshold: 60
+    successThreshold: 1
 
 livenessProbe:
-  initialDelaySeconds: 0
-  periodSeconds: 10
-  failureThreshold: 3
-  successThreshold: 1
-  httpGet:
-    path: /actuator/health/liveness
-    port: http-metric
+    initialDelaySeconds: 90
+    periodSeconds: 10
+    failureThreshold: 6
+    successThreshold: 1
+    timeoutSeconds: 10
+    httpGet:
+        path: /actuator/health/liveness
+        port: http-metric
 
 readinessProbe:
-  initialDelaySeconds: 0
-  periodSeconds: 10
-  failureThreshold: 3
-  successThreshold: 1
-  httpGet:
-    path: /actuator/health/readiness
-    port: http-metric
+    initialDelaySeconds: 90
+    periodSeconds: 10
+    failureThreshold: 6
+    successThreshold: 1
+    timeoutSeconds: 10
+    httpGet:
+        path: /actuator/health/readiness
+        port: http-metric
 
 serviceMonitor:
-  enabled: true
+    enabled: true
 
 service:
-  type: ClusterIP
-  port: 80
+    type: ClusterIP
+    port: 80
 
 ingress:
-  enabled: false
-  className: "nginx"
-  annotations: {}
-  host: chart-example.local
-  path: /
-  pathType: ImplementationSpecific
-  tls: {}
+    enabled: false
+    className: "nginx"
+    annotations: {}
+    host: chart-example.local
+    path: /
+    pathType: ImplementationSpecific
+    tls: {}
 #    secretName: chart-example-tls
 #    host: chart-example.local
 
 resources: {}
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
-  # resources, such as Minikube. If you do want to specify resources, uncomment the following
-  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  # requests:
-  #   cpu: 100m
-  #   memory: 128Mi
+    # We usually recommend not to specify default resources and to leave this as a conscious
+    # choice for the user. This also increases chances charts run on environments with little
+    # resources, such as Minikube. If you do want to specify resources, uncomment the following
+    # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
 
 autoscaling:
-  enabled: false
-  minReplicas: 1
-  maxReplicas: 100
-  targetCPUUtilizationPercentage: 80
-  # targetMemoryUtilizationPercentage: 80
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 100
+    targetCPUUtilizationPercentage: 80
+    # targetMemoryUtilizationPercentage: 80
 
 nodeSelector: {}
 
