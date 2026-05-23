@@ -267,15 +267,6 @@ jobs:
           NGINX_REPLICAS=$(yq e '(select(.kind == "Deployment") | .spec.replicas)' clusters/staging/nginx/nginx.yaml)
           [ "$NGINX_REPLICAS" != "null" ] && [ -n "$NGINX_REPLICAS" ] && yq e ".staging.nginx = $NGINX_REPLICAS" -i state.yaml
 
-      - name: Update staging targetRevision
-        run: |
-          TAG="${{ steps.tag.outputs.TAG }}"
-          for file in apps/staging/*.yaml; do
-            if grep -q "repoURL: https://github.com/devops-hcmus/yas-cd" "$file"; then
-              sed -i "/repoURL: https:\/\/github.com\/devops-hcmus\/yas-cd/{n;s/targetRevision: .*/targetRevision: $TAG/}" "$file"
-            fi
-          done
-
       - name: Commit and push scale-up
         run: |
           TAG="${{ steps.tag.outputs.TAG }}"
