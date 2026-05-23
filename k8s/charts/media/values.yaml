@@ -13,6 +13,7 @@ backend:
   initContainers:
     - name: copy-sample-images
       image: danzgne/yas-sampledata:main
+      imagePullPolicy: Always
       command: ["sh", "-c", "cp -r /sample-images/sample /images/ && echo 'Images copied'"]
       volumeMounts:
         - name: media-images
