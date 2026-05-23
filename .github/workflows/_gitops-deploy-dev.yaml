@@ -12,7 +12,7 @@ on:
         required: true
         type: string
       tag:
-        description: "Image tag to write into values.yaml"
+        description: "Image tag to write into values.yaml (short SHA from service CI)"
         required: true
         type: string
       values-key:
