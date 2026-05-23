@@ -355,32 +355,33 @@ jobs:
 
                   # Deploy media with sample images initialization (initContainers for media image setup)
                   echo "Deploying media with sample images (tag: ${{ needs.get-commit-ids.outputs.media_tag }})..."
-                  
+
                   # Create temporary values file for media deployment
                   cat > /tmp/media-values-dev.yaml <<EOF
-backend:
-  image:
-    repository: ${REPO}/yas-media
-    tag: ${{ needs.get-commit-ids.outputs.media_tag }}
-  initContainers:
-    - name: copy-sample-images
-      image: ${REPO}/yas-sampledata:${{ needs.get-commit-ids.outputs.sampledata_tag }}
-      command: ["sh", "-c", "cp -r /sample-images/sample /images/ && echo 'Images copied'"]
-      volumeMounts:
-        - name: media-images
-          mountPath: /images
-  extraVolumes:
-    - name: media-application
-      configMap:
-        name: media-application-configmap
-    - name: media-images
-      emptyDir: {}
-  extraVolumeMounts:
-    - name: media-application
-      mountPath: /opt/yas/media
-    - name: media-images
-      mountPath: /images
-EOF
+                  backend:
+                    image:
+                      repository: ${REPO}/yas-media
+                      tag: ${{ needs.get-commit-ids.outputs.media_tag }}
+                    initContainers:
+                      - name: copy-sample-images
+                        image: ${REPO}/yas-sampledata:${{ needs.get-commit-ids.outputs.sampledata_tag }}
+                        command: ["sh", "-c", "cp -r /sample-images/sample /images/ && echo 'Images copied'"]
+                        volumeMounts:
+                          - name: media-images
+                            mountPath: /images
+                    extraVolumes:
+                      - name: media-application
+                        configMap:
+                          name: media-application-configmap
+                      - name: media-images
+                        emptyDir: {}
+                    extraVolumeMounts:
+                      - name: media-application
+                        mountPath: /opt/yas/media
+                      - name: media-images
+                        mountPath: /images
+                  EOF
+
 
                   helm upgrade --install media k8s/charts/media \
                     --namespace "$NS" \
