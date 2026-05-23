@@ -23,10 +23,6 @@ on:
 jobs:
     cleanup:
         runs-on: self-hosted
-        # Serialize concurrent deploys: only one cleanup at a time; later runs re-list and usually find nothing.
-        concurrency:
-            group: yas-developer-namespace-cleanup
-            cancel-in-progress: false
         steps:
             - name: Cleanup developer namespaces
               id: work
