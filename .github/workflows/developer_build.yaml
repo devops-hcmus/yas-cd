@@ -493,6 +493,14 @@ jobs:
                   echo "storefront_ui_np=$STOREFRONT_UI_NP" >> $GITHUB_OUTPUT
                   echo "nginx_np=$NGINX_NP" >> $GITHUB_OUTPUT
 
+            - name: Register Keycloak redirect URIs
+              run: |
+                  ./k8s/deploy/keycloak/manage-dev-redirects.sh register \
+                    --namespace "${{ env.TARGET_NAMESPACE }}" \
+                    --storefront-port "${{ steps.nodeports.outputs.storefront_bff_np }}" \
+                    --backoffice-port "${{ steps.nodeports.outputs.backoffice_bff_np }}" \
+                    --worker-ip "${{ steps.worker-ip.outputs.worker_ip }}"
+
             - name: Publish Summary Report
               run: |
                   NS="${{ env.TARGET_NAMESPACE }}"
@@ -545,6 +553,7 @@ jobs:
                   echo "| 🔧 Backoffice | \`http://localhost:${BACKOFFICE_BFF_NP}\` | Admin backoffice panel (via BFF gateway) |" >> $GITHUB_STEP_SUMMARY
                   echo "" >> $GITHUB_STEP_SUMMARY
                   echo "> Product images are served at \`/api/media/medias/...\` through the storefront BFF. Do not use \`api.yas.local.com\` unless you also tunnel nginx NodePort (\`${{ steps.nodeports.outputs.nginx_np }}\`) and add it to hosts." >> $GITHUB_STEP_SUMMARY
+                  echo "> OAuth redirect URIs for \`localhost:<NodePort>\` were registered in Keycloak automatically. They are removed when you run **Developer Cleanup**." >> $GITHUB_STEP_SUMMARY
                   echo "" >> $GITHUB_STEP_SUMMARY
 
                   cat >> $GITHUB_STEP_SUMMARY << 'DETAILS'
