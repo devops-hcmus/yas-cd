@@ -338,12 +338,13 @@ jobs:
 
                   deploy_media() {
                     local media_tag=$1 sampledata_tag=$2
+                    local sampledata_image="${REPO}/yas-sampledata:${sampledata_tag}"
                     echo "Deploying media (tag: $media_tag, sampledata init: $sampledata_tag)..."
                     helm upgrade --install media k8s/charts/media \
                       --namespace "$NS" \
                       --set backend.image.repository="${REPO}/yas-media" \
                       --set backend.image.tag="$media_tag" \
-                      --set backend.initContainers[0].image="${REPO}/yas-sampledata:${sampledata_tag}" || true
+                      --set-json 'backend.initContainers=[{"name":"copy-sample-images","image":"'"${sampledata_image}"'","command":["sh","-c","cp -r /sample-images/sample /images/ && echo Images copied"],"volumeMounts":[{"name":"media-images","mountPath":"/images"}]}]' || true
                   }
 
                   deploy_backend cart "${{ needs.get-commit-ids.outputs.cart_tag }}"
