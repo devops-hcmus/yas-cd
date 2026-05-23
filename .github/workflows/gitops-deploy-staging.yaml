@@ -6,6 +6,11 @@ on:
       - "v*.*.*"
 
 jobs:
+  cleanup-developer-namespaces:
+    uses: ./.github/workflows/developer_cleanup.yaml
+    with:
+      wait_seconds: 45
+
   # ── Java / Spring Boot services ──────────────────────────────────────────
   build-java:
     strategy:
@@ -128,7 +133,11 @@ jobs:
 
   # ── GitOps update (runs after all builds complete) ────────────────────────
   update-gitops:
-    needs: [build-java, build-storefront, build-backoffice]
+    needs:
+      - cleanup-developer-namespaces
+      - build-java
+      - build-storefront
+      - build-backoffice
     runs-on: ubuntu-latest
     steps:
       - name: Extract tag name
