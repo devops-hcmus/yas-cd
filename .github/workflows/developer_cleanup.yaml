@@ -7,66 +7,106 @@ on:
                 description: "Namespace to clean up (from developer_build summary)"
                 required: true
                 type: string
+    workflow_call:
+        inputs:
+            namespace:
+                description: "Namespace to clean up. Empty = delete all yas-dev-* namespaces"
+                required: false
+                type: string
+                default: ""
+            wait_seconds:
+                description: "Seconds to wait after cleanup"
+                required: false
+                type: number
+                default: 45
 
 jobs:
     cleanup:
         runs-on: self-hosted
+        # Serialize concurrent deploys: only one cleanup at a time; later runs re-list and usually find nothing.
+        concurrency:
+            group: yas-developer-namespace-cleanup
+            cancel-in-progress: false
         steps:
-            - name: Validate namespace
+            - name: Cleanup developer namespaces
+              id: work
               run: |
-                  NS="${{ inputs.namespace }}"
-                  if [[ ! "$NS" =~ ^yas-dev- ]]; then
-                    echo "ERROR: Only namespaces starting with 'yas-dev-' can be deleted."
-                    exit 1
-                  fi
-                  if ! kubectl get namespace "$NS" &>/dev/null; then
-                    echo "ERROR: Namespace '$NS' does not exist."
-                    exit 1
-                  fi
-                  echo "Namespace '$NS' found. Proceeding with cleanup..."
+                  list_yas_dev_ns() {
+                    kubectl get namespaces -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}' \
+                      | grep '^yas-dev-' || true
+                  }
 
-            - name: Uninstall all Helm releases
-              run: |
-                  NS="${{ inputs.namespace }}"
-                  echo "Listing Helm releases in $NS..."
-                  RELEASES=$(helm list -n "$NS" -q 2>/dev/null)
-                  if [ -z "$RELEASES" ]; then
-                    echo "No Helm releases found."
+                  NAMES=()
+                  if [ -n "${{ inputs.namespace }}" ]; then
+                    NS="${{ inputs.namespace }}"
+                    if [[ ! "$NS" =~ ^yas-dev- ]]; then
+                      echo "ERROR: Only namespaces starting with 'yas-dev-' can be deleted."
+                      exit 1
+                    fi
+                    if ! kubectl get namespace "$NS" &>/dev/null; then
+                      echo "ERROR: Namespace '$NS' does not exist."
+                      exit 1
+                    fi
+                    NAMES=("$NS")
                   else
-                    for release in $RELEASES; do
-                      echo "Uninstalling $release..."
-                      helm uninstall "$release" -n "$NS" --wait --timeout 2m || true
-                    done
+                    while IFS= read -r ns; do
+                      [ -n "$ns" ] && NAMES+=("$ns")
+                    done < <(list_yas_dev_ns)
                   fi
 
-            # - name: Clean up Service Mesh resources
-            #   run: |
-            #       NS="${{ inputs.namespace }}"
-            #       echo "Removing Istio resources from $NS..."
-            #       kubectl delete authorizationpolicy --all -n "$NS" 2>/dev/null || true
-            #       kubectl delete peerauthentication --all -n "$NS" 2>/dev/null || true
-            #       kubectl delete destinationrule --all -n "$NS" 2>/dev/null || true
-            #       kubectl delete virtualservice --all -n "$NS" 2>/dev/null || true
-            #       kubectl label namespace "$NS" istio-injection- 2>/dev/null || true
-            #       echo "Service mesh resources cleaned"
+                  if [ "${#NAMES[@]}" -eq 0 ]; then
+                    echo "No yas-dev-* namespaces to clean."
+                    echo "performed=false" >> $GITHUB_OUTPUT
+                    echo "namespaces=" >> $GITHUB_OUTPUT
+                    exit 0
+                  fi
 
-            - name: Delete remaining resources
-              run: |
-                  NS="${{ inputs.namespace }}"
-                  kubectl delete all --all -n "$NS" --timeout=2m || true
-                  kubectl delete configmap --all -n "$NS" || true
-                  kubectl delete secret --all -n "$NS" || true
+                  echo "Will clean: ${NAMES[*]}"
+                  PERFORMED=false
 
-            - name: Delete namespace
+                  for NS in "${NAMES[@]}"; do
+                    if ! kubectl get namespace "$NS" &>/dev/null; then
+                      echo "Skip $NS (already removed)."
+                      continue
+                    fi
+                    PERFORMED=true
+
+                    echo "=== Helm uninstall in $NS ==="
+                    RELEASES=$(helm list -n "$NS" -q 2>/dev/null)
+                    if [ -n "$RELEASES" ]; then
+                      for release in $RELEASES; do
+                        echo "Uninstalling $release..."
+                        helm uninstall "$release" -n "$NS" --wait --timeout 2m || true
+                      done
+                    fi
+
+                    echo "=== Delete resources in $NS ==="
+                    kubectl delete all --all -n "$NS" --timeout=2m || true
+                    kubectl delete configmap --all -n "$NS" || true
+                    kubectl delete secret --all -n "$NS" || true
+
+                    echo "=== Delete namespace $NS ==="
+                    kubectl delete namespace "$NS" --timeout=5m || true
+                    echo "Namespace '$NS' deleted."
+                  done
+
+                  echo "performed=$PERFORMED" >> $GITHUB_OUTPUT
+                  echo "namespaces=${NAMES[*]}" >> $GITHUB_OUTPUT
+
+            - name: Wait for cleanup to settle
+              if: github.event_name == 'workflow_call' && steps.work.outputs.performed == 'true'
               run: |
-                  NS="${{ inputs.namespace }}"
-                  kubectl delete namespace "$NS" --timeout=5m
-                  echo "Namespace '$NS' deleted successfully."
+                  echo "Waiting ${{ inputs.wait_seconds }}s after developer namespace cleanup..."
+                  sleep ${{ inputs.wait_seconds }}
 
             - name: Summary
               run: |
                   echo "## 🧹 Developer Cleanup Completed" >> $GITHUB_STEP_SUMMARY
                   echo "" >> $GITHUB_STEP_SUMMARY
-                  echo "- **Namespace:** \`${{ inputs.namespace }}\`" >> $GITHUB_STEP_SUMMARY
-                  echo "- **Triggered By:** \`${{ github.actor }}\`" >> $GITHUB_STEP_SUMMARY
-                  echo "- **Status:** ✅ Deleted" >> $GITHUB_STEP_SUMMARY
+                  if [ "${{ steps.work.outputs.performed }}" != "true" ]; then
+                    echo "No \`yas-dev-*\` namespaces needed cleanup." >> $GITHUB_STEP_SUMMARY
+                  else
+                    echo "- **Namespace(s):** \`${{ steps.work.outputs.namespaces }}\`" >> $GITHUB_STEP_SUMMARY
+                    echo "- **Triggered By:** \`${{ github.actor }}\`" >> $GITHUB_STEP_SUMMARY
+                    echo "- **Status:** ✅ Deleted" >> $GITHUB_STEP_SUMMARY
+                  fi
