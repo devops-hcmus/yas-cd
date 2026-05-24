@@ -1,0 +1,15 @@
+{{- range .Values.dashboards }}
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: {{ .name }}
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  folder: {{ .folder | quote }}
+  configMapRef:
+    name: grafana-dashboard-{{ .name }}
+    key: json
+{{- end }}
