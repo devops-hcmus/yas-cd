@@ -302,13 +302,14 @@ done
 echo -e "  Creating test pods with various service accounts..."
 
 # Deploy comprehensive test pods
-APPLY_OUTPUT=$(cat <<'TESTPODS' | sed "s/\$NS/$NS/g" | kubectl apply -f - 2>&1
+APPLY_OUTPUT=$(cat <<TESTPODS | kubectl apply -n "$NS" -f - 2>&1
 ---
 # Test pod: storefront-bff (allowed to call: product, cart, order, customer, inventory, media, search)
 apiVersion: v1
 kind: Pod
 metadata:
   name: test-storefront-bff
+  namespace: $NS
   labels:
     app: test-storefront-bff
     purpose: authorization-testing
@@ -331,6 +332,7 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: test-backoffice-bff
+  namespace: $NS
   labels:
     app: test-backoffice-bff
     purpose: authorization-testing
@@ -353,6 +355,7 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: test-order-pod
+  namespace: $NS
   labels:
     app: test-order-pod
     purpose: authorization-testing
@@ -375,6 +378,7 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: test-search-pod
+  namespace: $NS
   labels:
     app: test-search-pod
     purpose: authorization-testing
@@ -397,6 +401,7 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: test-cart-pod
+  namespace: $NS
   labels:
     app: test-cart-pod
     purpose: authorization-testing
@@ -419,11 +424,13 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: unauthorized-client
+  namespace: $NS
 ---
 apiVersion: v1
 kind: Pod
 metadata:
   name: test-unauthorized
+  namespace: $NS
   labels:
     app: test-unauthorized
     purpose: authorization-testing
