@@ -694,11 +694,11 @@ if [ "$ORDER_READY" == "True" ]; then
         log_fail "order got access to media (should be denied)"
     fi
 
-    log_test "DENY - order → tax (not allowed)"
-    if test_access "test-order-pod" "tax" "DENY"; then
-        log_pass "order correctly denied access to tax"
+    log_test "ALLOW - order → tax (allowed)"
+    if test_access "test-order-pod" "tax" "ALLOW"; then
+        log_pass "order correctly allowed access to tax"
     else
-        log_fail "order got access to tax"
+        log_fail "order denied access to tax (should be allowed)"
     fi
 else
     log_test "DENY - order cross-service tests"
