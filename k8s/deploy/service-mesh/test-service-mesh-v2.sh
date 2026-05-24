@@ -302,16 +302,7 @@ done
 echo -e "  Creating test pods with various service accounts..."
 
 # Deploy comprehensive test pods
-APPLY_OUTPUT=$(cat <<'TESTPODS' | sed "s/\$NS/$NS/g" | kubectl apply -f - 2>&1)
-APPLY_RC=$?
-
-if [ $APPLY_RC -ne 0 ]; then
-    echo "  ⚠️  Warning: kubectl apply returned code $APPLY_RC"
-    echo "  Output: $APPLY_OUTPUT"
-else
-    echo "  ✓ Pods deployed successfully"
-fi
-
+APPLY_OUTPUT=$(cat <<'TESTPODS' | sed "s/\$NS/$NS/g" | kubectl apply -f - 2>&1
 ---
 # Test pod: storefront-bff (allowed to call: product, cart, order, customer, inventory, media, search)
 apiVersion: v1
@@ -449,6 +440,15 @@ spec:
         requests: { memory: "32Mi", cpu: "50m" }
   restartPolicy: Never
 TESTPODS
+)
+APPLY_RC=$?
+
+if [ $APPLY_RC -ne 0 ]; then
+    echo "  ⚠️  Warning: kubectl apply returned code $APPLY_RC"
+    echo "  Output: $APPLY_OUTPUT"
+else
+    echo "  ✓ Pods deployed successfully"
+fi
 
 echo -e "  Waiting for test pods to be ready (with sidecar injection)..."
 
