@@ -832,7 +832,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "process_open_fds{application=\"$service\", namespace=\"$namespace\"}",
+          "expr": "process_files_open_files{application=\"$service\", namespace=\"$namespace\"}",
           "instant": false,
           "range": true,
           "refId": "A"
@@ -1521,7 +1521,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "process_cpu_seconds_total{application=\"$service\", namespace=\"$namespace\"}",
+          "expr": "process_cpu_usage{application=\"$service\", namespace=\"$namespace\"} * 100",
           "instant": false,
           "range": true,
           "refId": "A"
@@ -1764,7 +1764,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(rate(process_cpu_seconds_total{application=\"$service\", namespace=\"$namespace\"}[5m]))",
+          "expr": "avg(process_cpu_usage{application=\"$service\", namespace=\"$namespace\"}) * 100",
           "instant": false,
           "range": true,
           "refId": "A"
@@ -1856,7 +1856,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "topk(5, rate(process_cpu_seconds_total{application=\"$service\", namespace=\"$namespace\"}[5m]))",
+          "expr": "topk(5, process_cpu_usage{application=\"$service\", namespace=\"$namespace\"} * 100)",
           "instant": false,
           "range": true,
           "refId": "A"
@@ -1949,7 +1949,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "jvm_memory_usage_after_gc{application=\"$service\", namespace=\"$namespace\", id=~\"$jvm_memory_pool_heap\"}",
+          "expr": "jvm_gc_live_data_size_bytes{application=\"$service\", namespace=\"$namespace\"}",
           "instant": false,
           "range": true,
           "refId": "A"
@@ -2303,7 +2303,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "avg_over_time(process_resident_memory_bytes{application=\"$service\", namespace=\"$namespace\"} [5m]) / 1048576",
+          "expr": "sum(avg_over_time(jvm_memory_used_bytes{application=\"$service\", namespace=\"$namespace\"}[5m])) / 1048576",
           "range": true,
           "refId": "A"
         }
@@ -2339,20 +2339,24 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
-            "fillOpacity": 80,
+            "fillOpacity": 10,
             "gradientMode": "none",
             "hideFrom": {
               "legend": false,
               "tooltip": false,
               "viz": false
             },
-            "lineWidth": 1,
+            "lineWidth": 2,
             "scaleDistribution": {
               "type": "linear"
             },
             "thresholdsStyle": {
               "mode": "off"
-            }
+            },
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "showPoints": "auto",
+            "spanNulls": false
           },
           "mappings": [],
           "thresholds": {
@@ -2379,25 +2383,16 @@
       },
       "id": 11,
       "options": {
-        "barRadius": 0,
-        "barWidth": 0.97,
-        "fullHighlight": false,
-        "groupWidth": 0.7,
         "legend": {
           "calcs": [],
           "displayMode": "list",
           "placement": "bottom",
           "showLegend": true
         },
-        "orientation": "auto",
-        "showValue": "auto",
-        "stacking": "none",
         "tooltip": {
           "mode": "single",
           "sort": "none"
-        },
-        "xTickLabelRotation": 0,
-        "xTickLabelSpacing": 0
+        }
       },
       "pluginVersion": "10.0.0",
       "targets": [
@@ -2414,7 +2409,7 @@
         }
       ],
       "title": "Max Connection Allowed",
-      "type": "barchart"
+      "type": "timeseries"
     },
     {
       "datasource": {
@@ -2431,20 +2426,24 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
-            "fillOpacity": 80,
+            "fillOpacity": 10,
             "gradientMode": "none",
             "hideFrom": {
               "legend": false,
               "tooltip": false,
               "viz": false
             },
-            "lineWidth": 1,
+            "lineWidth": 2,
             "scaleDistribution": {
               "type": "linear"
             },
             "thresholdsStyle": {
               "mode": "off"
-            }
+            },
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "showPoints": "auto",
+            "spanNulls": false
           },
           "mappings": [
             {
@@ -2481,25 +2480,16 @@
       },
       "id": 12,
       "options": {
-        "barRadius": 0,
-        "barWidth": 0.97,
-        "fullHighlight": false,
-        "groupWidth": 0.7,
         "legend": {
           "calcs": [],
           "displayMode": "list",
           "placement": "bottom",
           "showLegend": true
         },
-        "orientation": "auto",
-        "showValue": "auto",
-        "stacking": "none",
         "tooltip": {
           "mode": "single",
           "sort": "none"
-        },
-        "xTickLabelRotation": 0,
-        "xTickLabelSpacing": 0
+        }
       },
       "pluginVersion": "10.0.0",
       "targets": [
@@ -2516,7 +2506,7 @@
         }
       ],
       "title": "Number Of Connection In Use",
-      "type": "barchart"
+      "type": "timeseries"
     }
   ],
   "refresh": "",
