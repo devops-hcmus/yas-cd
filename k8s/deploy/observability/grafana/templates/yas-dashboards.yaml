@@ -9,7 +9,6 @@ spec:
     matchLabels:
       dashboards: "grafana"
   folder: {{ .folder | quote }}
-  configMapRef:
-    name: grafana-dashboard-{{ .name }}
-    key: json
+  json: |-
+{{ $.Files.Get (printf "dashboards/%s" .file) | indent 4 }}
 {{- end }}
