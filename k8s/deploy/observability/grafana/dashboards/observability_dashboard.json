@@ -87,7 +87,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum (\r\n  increase (\r\n    http_server_request_duration_seconds_count{service_name=\"$service\"}[$__range]\r\n  )\r\n)",
+          "expr": "sum (\n  increase (\n    http_server_requests_seconds_count{application=\"$service\", namespace=\"$namespace\"}[$__range]\n  )\n)",
           "instant": true,
           "range": false,
           "refId": "A"
@@ -246,9 +246,9 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by (http_response_status_code) (\r\n  label_replace (\r\n    increase (\r\n      http_server_request_duration_seconds_count{service_name=\"$service\"}[$__range]\r\n    ),\r\n    \"http_response_status_code\",\r\n    \"Unknown\",\r\n    \"http_response_status_code\",\r\n    \"\"\r\n  )\r\n)",
+          "expr": "sum by (status) (\n  label_replace (\n    increase (\n      http_server_requests_seconds_count{application=\"$service\", namespace=\"$namespace\"}[$__range]\n    ),\n    \"status\",\n    \"Unknown\",\n    \"status\",\n    \"\"\n  )\n)",
           "instant": true,
-          "legendFormat": "{{http_response_status_code}}",
+          "legendFormat": "{{status}}",
           "range": false,
           "refId": "A"
         }
@@ -340,9 +340,9 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (http_route, http_request_method) (\r\n  rate (\r\n    http_server_request_duration_seconds_count{service_name=\"$service\"}[5m]\r\n  )\r\n)",
+          "expr": "sum by (uri, method) (\n  rate (\n    http_server_requests_seconds_count{application=\"$service\", namespace=\"$namespace\"}[5m]\n  )\n)",
           "instant": false,
-          "legendFormat": "{{http_request_method}} {{http_route}}",
+          "legendFormat": "{{method}} {{uri}}",
           "range": true,
           "refId": "A"
         }
@@ -438,7 +438,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by (http_route, http_request_method) (\r\n  increase(\r\n    http_server_request_duration_seconds_count{\r\n      service_name=\"$service\", \r\n      http_response_status_code=~\"2..|3..\"\r\n    }[$__range]\r\n  )\r\n)",
+          "expr": "sum by (uri, method) (\n  increase(\n    http_server_requests_seconds_count{\n      application=\"$service\", namespace=\"$namespace\", \n      status=~\"2..|3..\"\n    }[$__range]\n  )\n)",
           "format": "table",
           "instant": true,
           "range": false,
@@ -451,7 +451,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by (http_route, http_request_method) (\r\n  increase(\r\n    http_server_request_duration_seconds_count{\r\n      service_name=\"$service\", \r\n      http_response_status_code=~\"4..|5..\"\r\n    }[$__range]\r\n  )\r\n)",
+          "expr": "sum by (uri, method) (\n  increase(\n    http_server_requests_seconds_count{\n      application=\"$service\", namespace=\"$namespace\", \n      status=~\"4..|5..\"\n    }[$__range]\n  )\n)",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -476,8 +476,8 @@
               "Value": "Total Success Requests",
               "Value #A": "Successes",
               "Value #B": "Failures",
-              "http_request_method": "Method",
-              "http_route": "Route"
+              "method": "Method",
+              "uri": "Route"
             }
           }
         }
@@ -545,9 +545,9 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (http_route, http_request_method) (\r\n  increase (\r\n    http_server_request_duration_seconds_sum{service_name=\"$service\"}[$__range]\r\n  )\r\n)\r\n/\r\nsum by (http_route, http_request_method) (\r\n  increase (\r\n    http_server_request_duration_seconds_count{service_name=\"$service\"}[$__range]\r\n  )\r\n)",
+          "expr": "sum by (uri, method) (\n  increase (\n    http_server_requests_seconds_sum{application=\"$service\", namespace=\"$namespace\"}[$__range]\n  )\n)\n/\nsum by (uri, method) (\n  increase (\n    http_server_requests_seconds_count{application=\"$service\", namespace=\"$namespace\"}[$__range]\n  )\n)",
           "instant": false,
-          "legendFormat": "{{http_request_method}} {{http_route}}",
+          "legendFormat": "{{method}} {{uri}}",
           "range": true,
           "refId": "A"
         }
@@ -620,7 +620,7 @@
                 "uid": "prometheus"
               },
               "editorMode": "code",
-              "expr": "jvm_class_count{service_name=\"$service\"}",
+              "expr": "jvm_classes_loaded_classes{application=\"$service\", namespace=\"$namespace\"}",
               "instant": false,
               "range": true,
               "refId": "A"
@@ -684,7 +684,7 @@
                 "uid": "prometheus"
               },
               "editorMode": "code",
-              "expr": "jvm_class_loaded_total{service_name=\"$service\"}",
+              "expr": "jvm_classes_loaded_count_classes_total{application=\"$service\", namespace=\"$namespace\"}",
               "instant": false,
               "range": true,
               "refId": "A"
@@ -767,7 +767,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "(time() - process_start_time_seconds) / 3600",
+          "expr": "(time() - process_start_time_seconds{application=\"$service\", namespace=\"$namespace\"}) / 3600",
           "instant": false,
           "range": true,
           "refId": "A"
@@ -832,7 +832,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "process_open_fds",
+          "expr": "process_open_fds{application=\"$service\", namespace=\"$namespace\"}",
           "instant": false,
           "range": true,
           "refId": "A"
@@ -934,7 +934,7 @@
                 "uid": "prometheus"
               },
               "editorMode": "code",
-              "expr": "jvm_memory_used_bytes{service_name=\"$service\", id=~\"$jvm_memory_pool_heap\"}",
+              "expr": "jvm_memory_used_bytes{application=\"$service\", namespace=\"$namespace\", id=~\"$jvm_memory_pool_heap\"}",
               "hide": false,
               "instant": false,
               "range": true,
@@ -946,7 +946,7 @@
                 "uid": "prometheus"
               },
               "editorMode": "code",
-              "expr": "jvm_memory_committed_bytes{service_name=\"$service\", id=~\"$jvm_memory_pool_heap\"}",
+              "expr": "jvm_memory_committed_bytes{application=\"$service\", namespace=\"$namespace\", id=~\"$jvm_memory_pool_heap\"}",
               "instant": false,
               "range": true,
               "refId": "A"
@@ -957,7 +957,7 @@
                 "uid": "prometheus"
               },
               "editorMode": "code",
-              "expr": "jvm_memory_max_bytes{service_name=\"$service\", id=~\"$jvm_memory_pool_heap\"}",
+              "expr": "jvm_memory_max_bytes{application=\"$service\", namespace=\"$namespace\", id=~\"$jvm_memory_pool_heap\"}",
               "hide": false,
               "instant": false,
               "range": true,
@@ -1050,7 +1050,7 @@
                 "uid": "prometheus"
               },
               "editorMode": "code",
-              "expr": "jvm_memory_used_bytes{service_name=\"$service\", id=~\"$jvm_memory_pool_nonheap\"}",
+              "expr": "jvm_memory_used_bytes{application=\"$service\", namespace=\"$namespace\", id=~\"$jvm_memory_pool_nonheap\"}",
               "hide": false,
               "instant": false,
               "range": true,
@@ -1062,7 +1062,7 @@
                 "uid": "prometheus"
               },
               "editorMode": "code",
-              "expr": "jvm_memory_committed_bytes{service_name=\"$service\", id=~\"$jvm_memory_pool_nonheap\"}",
+              "expr": "jvm_memory_committed_bytes{application=\"$service\", namespace=\"$namespace\", id=~\"$jvm_memory_pool_nonheap\"}",
               "instant": false,
               "range": true,
               "refId": "A"
@@ -1073,7 +1073,7 @@
                 "uid": "prometheus"
               },
               "editorMode": "code",
-              "expr": "jvm_memory_max_bytes{service_name=\"$service\", id=~\"$jvm_memory_pool_nonheap\"}",
+              "expr": "jvm_memory_max_bytes{application=\"$service\", namespace=\"$namespace\", id=~\"$jvm_memory_pool_nonheap\"}",
               "hide": false,
               "instant": false,
               "range": true,
@@ -1165,7 +1165,7 @@
                 "uid": "prometheus"
               },
               "editorMode": "code",
-              "expr": "rate(jvm_gc_duration_seconds_sum[5m])",
+              "expr": "sum(rate(jvm_gc_pause_seconds_sum{application=\"$service\", namespace=\"$namespace\"}[5m]))",
               "instant": false,
               "range": true,
               "refId": "A"
@@ -1257,7 +1257,7 @@
                 "uid": "prometheus"
               },
               "editorMode": "code",
-              "expr": "jvm_memory_used_bytes{service_name=\"$service\", id=~\"$jvm_buffer_pool\"}",
+              "expr": "jvm_memory_used_bytes{application=\"$service\", namespace=\"$namespace\", id=~\"$jvm_buffer_pool\"}",
               "instant": false,
               "range": true,
               "refId": "A"
@@ -1348,7 +1348,7 @@
                 "uid": "prometheus"
               },
               "editorMode": "code",
-              "expr": "sum by(service_name) (rate(jvm_thread_count{service_name=\"$service\"}[5m]))",
+              "expr": "jvm_threads_live_threads{application=\"$service\", namespace=\"$namespace\"}",
               "instant": false,
               "range": true,
               "refId": "A"
@@ -1439,7 +1439,7 @@
                 "uid": "prometheus"
               },
               "editorMode": "code",
-              "expr": "jvm_gc_duration_seconds_sum{service_name=\"$service\"}",
+              "expr": "jvm_gc_pause_seconds_sum{application=\"$service\", namespace=\"$namespace\"}",
               "instant": false,
               "range": true,
               "refId": "A"
@@ -1462,8 +1462,6 @@
       },
       "id": 3,
       "panels": [],
-      "repeat": "service_name",
-      "repeatDirection": "h",
       "title": "CPU Observability",
       "type": "row"
     },
@@ -1523,7 +1521,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "process_cpu_seconds_total",
+          "expr": "process_cpu_seconds_total{application=\"$service\", namespace=\"$namespace\"}",
           "instant": false,
           "range": true,
           "refId": "A"
@@ -1534,7 +1532,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "jvm_class_loaded_total{service_name=\"$service\"}",
+          "expr": "jvm_classes_loaded_count_classes_total{application=\"$service\", namespace=\"$namespace\"}",
           "hide": false,
           "instant": false,
           "range": true,
@@ -1613,7 +1611,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "jvm_cpu_recent_utilization_ratio",
+          "expr": "process_cpu_usage{application=\"$service\", namespace=\"$namespace\"}",
           "instant": false,
           "range": true,
           "refId": "A"
@@ -1674,7 +1672,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "jvm_cpu_count{service_name=\"$service\"}",
+          "expr": "system_cpu_count{application=\"$service\", namespace=\"$namespace\"}",
           "instant": false,
           "range": true,
           "refId": "A"
@@ -1766,7 +1764,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(rate(process_cpu_seconds_total[5m]))",
+          "expr": "sum(rate(process_cpu_seconds_total{application=\"$service\", namespace=\"$namespace\"}[5m]))",
           "instant": false,
           "range": true,
           "refId": "A"
@@ -1858,7 +1856,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "topk(5, rate(process_cpu_seconds_total[5m]))",
+          "expr": "topk(5, rate(process_cpu_seconds_total{application=\"$service\", namespace=\"$namespace\"}[5m]))",
           "instant": false,
           "range": true,
           "refId": "A"
@@ -1951,7 +1949,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "jvm_memory_used_after_last_gc_bytes{service_name=\"$service\", id=~\"$jvm_memory_pool_heap\"}",
+          "expr": "jvm_memory_usage_after_gc{application=\"$service\", namespace=\"$namespace\", id=~\"$jvm_memory_pool_heap\"}",
           "instant": false,
           "range": true,
           "refId": "A"
@@ -2056,7 +2054,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by(service_name) (jvm_memory_used_bytes{service_name=\"$service\"}) / 1048576",
+          "expr": "sum by(application) (jvm_memory_used_bytes{application=\"$service\", namespace=\"$namespace\"}) / 1048576",
           "instant": false,
           "range": true,
           "refId": "A"
@@ -2148,7 +2146,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by(service_name) (jvm_memory_committed_bytes{service_name=\"$service\"}) / 1048576",
+          "expr": "sum by(application) (jvm_memory_committed_bytes{application=\"$service\", namespace=\"$namespace\"}) / 1048576",
           "instant": false,
           "range": true,
           "refId": "A"
@@ -2213,7 +2211,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by(service_name) (jvm_memory_limit_bytes{service_name=\"$service\"}) / 1048576",
+          "expr": "sum by(application) (jvm_memory_max_bytes{application=\"$service\", namespace=\"$namespace\"}) / 1048576",
           "instant": false,
           "range": true,
           "refId": "A"
@@ -2305,7 +2303,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "avg_over_time(process_resident_memory_bytes [5m]) / 1048576",
+          "expr": "avg_over_time(process_resident_memory_bytes{application=\"$service\", namespace=\"$namespace\"} [5m]) / 1048576",
           "range": true,
           "refId": "A"
         }
@@ -2409,7 +2407,7 @@
             "uid": "prometheus"
           },
           "editorMode": "builder",
-          "expr": "db_client_connections_max",
+          "expr": "hikaricp_connections_max{application=\"$service\", namespace=\"$namespace\"}",
           "instant": false,
           "range": true,
           "refId": "A"
@@ -2504,8 +2502,6 @@
         "xTickLabelSpacing": 0
       },
       "pluginVersion": "10.0.0",
-      "repeat": "job",
-      "repeatDirection": "h",
       "targets": [
         {
           "datasource": {
@@ -2513,7 +2509,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "db_client_connections_usage",
+          "expr": "hikaricp_connections_active{application=\"$service\", namespace=\"$namespace\"}",
           "instant": false,
           "range": true,
           "refId": "A"
@@ -2540,7 +2536,7 @@
           "type": "prometheus",
           "uid": "prometheus"
         },
-        "definition": "label_values(service_namespace)",
+        "definition": "label_values(jvm_memory_used_bytes, namespace)",
         "hide": 0,
         "includeAll": false,
         "label": "Namespace",
@@ -2548,7 +2544,7 @@
         "name": "namespace",
         "options": [],
         "query": {
-          "query": "label_values(service_namespace)",
+          "query": "label_values(jvm_memory_used_bytes, namespace)",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
@@ -2559,15 +2555,15 @@
       },
       {
         "current": {
-          "selected": true,
-          "text": "storefront-bff-service",
-          "value": "storefront-bff-service"
+          "selected": false,
+          "text": "backoffice-bff",
+          "value": "backoffice-bff"
         },
         "datasource": {
           "type": "prometheus",
           "uid": "prometheus"
         },
-        "definition": "label_values(service_name)",
+        "definition": "label_values(jvm_memory_used_bytes{namespace=\"$namespace\"}, application)",
         "hide": 0,
         "includeAll": false,
         "label": "Service",
@@ -2575,7 +2571,7 @@
         "name": "service",
         "options": [],
         "query": {
-          "query": "label_values(service_name)",
+          "query": "label_values(jvm_memory_used_bytes{namespace=\"$namespace\"}, application)",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 1,
@@ -2595,7 +2591,7 @@
           "type": "prometheus",
           "uid": "prometheus"
         },
-        "definition": "label_values(jvm_memory_used_bytes{service_name=\"$service\", area=\"heap\"},id)",
+        "definition": "label_values(jvm_memory_used_bytes{application=\"$service\", namespace=\"$namespace\", area=\"heap\"}, id)",
         "hide": 0,
         "includeAll": false,
         "label": "JVM Memory Pools Heap",
@@ -2603,7 +2599,7 @@
         "name": "jvm_memory_pool_heap",
         "options": [],
         "query": {
-          "query": "label_values(jvm_memory_used_bytes{service_name=\"$service\", area=\"heap\"},id)",
+          "query": "label_values(jvm_memory_used_bytes{application=\"$service\", namespace=\"$namespace\", area=\"heap\"}, id)",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 1,
@@ -2623,7 +2619,7 @@
           "type": "prometheus",
           "uid": "prometheus"
         },
-        "definition": "label_values(jvm_memory_used_bytes{service_name=\"$service\", area=\"nonheap\"},id)",
+        "definition": "label_values(jvm_memory_used_bytes{application=\"$service\", namespace=\"$namespace\", area=\"nonheap\"}, id)",
         "hide": 0,
         "includeAll": false,
         "label": "JVM Memory Pools Non-Heap",
@@ -2631,7 +2627,7 @@
         "name": "jvm_memory_pool_nonheap",
         "options": [],
         "query": {
-          "query": "label_values(jvm_memory_used_bytes{service_name=\"$service\", area=\"nonheap\"},id)",
+          "query": "label_values(jvm_memory_used_bytes{application=\"$service\", namespace=\"$namespace\", area=\"nonheap\"}, id)",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 1,
@@ -2651,7 +2647,7 @@
           "type": "prometheus",
           "uid": "prometheus"
         },
-        "definition": "label_values(jvm_buffer_memory_used_bytes{service_name=\"$service\"},id)",
+        "definition": "label_values(jvm_buffer_memory_used_bytes{application=\"$service\", namespace=\"$namespace\"}, id)",
         "hide": 0,
         "includeAll": false,
         "label": "JVM Buffer Pool",
@@ -2659,7 +2655,7 @@
         "name": "jvm_buffer_pool",
         "options": [],
         "query": {
-          "query": "label_values(jvm_buffer_memory_used_bytes{service_name=\"$service\"},id)",
+          "query": "label_values(jvm_buffer_memory_used_bytes{application=\"$service\", namespace=\"$namespace\"}, id)",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 1,
@@ -2678,6 +2674,7 @@
   "timezone": "",
   "title": "Observability Dashboard",
   "uid": "ee57695c-a1af-4706-8a4c-937fb4c8f526",
-  "version": 2,
-  "weekStart": ""
+  "version": 3,
+  "weekStart": "",
+  "description": "Micrometer/Prometheus scrape (K8s). Adapted from OTel dashboard for /actuator/prometheus."
 }
