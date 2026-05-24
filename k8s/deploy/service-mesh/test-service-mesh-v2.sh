@@ -260,6 +260,10 @@ fi
 # ============================================================
 log_header "AUTHORIZATION TESTS - Deploying test pods"
 
+echo -e "  Cleaning up old test pods..."
+kubectl delete pods -n "$NS" -l purpose=authorization-testing --ignore-not-found=true 2>/dev/null || true
+sleep 2
+
 echo -e "  Creating test pods with various service accounts..."
 
 # Deploy comprehensive test pods
@@ -402,11 +406,54 @@ spec:
   restartPolicy: Never
 TESTPODS
 
-echo -e "  Waiting for test pods..."
+echo -e "  Waiting for test pods to be ready (with sidecar injection)..."
+
+wait_for_pod_ready() {
+    local pod=$1
+    local ns=$2
+    local timeout=180  # Increased to 3 minutes for sidecar injection
+    local elapsed=0
+    local interval=5
+
+    while [ $elapsed -lt $timeout ]; do
+        local status
+        status=$(kubectl get pod "$pod" -n "$ns" -o jsonpath='{.status.phase}' 2>/dev/null || echo "Unknown")
+        
+        if [ "$status" == "Running" ]; then
+            # Check if pod is actually ready (all containers ready)
+            local ready
+            ready=$(kubectl get pod "$pod" -n "$ns" -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' 2>/dev/null || echo "False")
+            if [ "$ready" == "True" ]; then
+                echo "      ✓ $pod is ready"
+                return 0
+            fi
+        fi
+        
+        echo "      ⏳ $pod: $status (waited ${elapsed}s/${timeout}s)"
+        sleep $interval
+        elapsed=$((elapsed + interval))
+    done
+    
+    # Pod didn't get ready, show diagnostics
+    echo "      ✗ $pod failed to become ready"
+    local events
+    events=$(kubectl describe pod "$pod" -n "$ns" 2>/dev/null | grep -A 5 "Events:" || echo "No events found")
+    if [ -n "$events" ]; then
+        echo "        Last events: $events"
+    fi
+    return 1
+}
+
+# Wait for all pods
+PODS_READY=0
 for pod in test-storefront-bff test-backoffice-bff test-order-pod test-search-pod test-cart-pod test-unauthorized; do
-    kubectl wait --for=condition=ready "pod/$pod" -n "$NS" --timeout=120s 2>/dev/null || true
+    if wait_for_pod_ready "$pod" "$NS"; then
+        PODS_READY=$((PODS_READY + 1))
+    fi
 done
-sleep 5
+
+echo -e "\n  Pod Status: ${PODS_READY}/6 pods ready"
+sleep 2
 
 # ============================================================
 # TEST 4: Authorization ALLOW - Whitelisted Access
@@ -419,6 +466,14 @@ test_access() {
     local target_svc=$2
     local expected_result=$3  # "ALLOW" or "DENY"
     local endpoint=${4:-"actuator/prometheus"}
+
+    # Check if pod exists and is running
+    local pod_status
+    pod_status=$(kubectl get pod "$pod" -n "$NS" -o jsonpath='{.status.phase}' 2>/dev/null || echo "NotFound")
+    
+    if [ "$pod_status" != "Running" ]; then
+        return 2  # SKIP - pod not ready
+    fi
 
     RAW_CODE=$(kubectl exec -n "$NS" "$pod" -- \
         curl -s -o /dev/null -w "%{http_code}" \
@@ -446,8 +501,8 @@ test_access() {
 }
 
 # Test storefront-bff ALLOW access
-SFBFF_READY=$(kubectl get pod test-storefront-bff -n "$NS" -o jsonpath='{.status.phase}' 2>/dev/null || echo "")
-if [ "$SFBFF_READY" == "Running" ]; then
+SFBFF_READY=$(kubectl get pod test-storefront-bff -n "$NS" -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' 2>/dev/null || echo "")
+if [ "$SFBFF_READY" == "True" ]; then
     log_test "ALLOW - storefront-bff → product"
     if test_access "test-storefront-bff" "product" "ALLOW"; then
         log_pass "storefront-bff allowed to call product"
@@ -474,8 +529,8 @@ else
 fi
 
 # Test backoffice-bff ALLOW access
-BOFFBFF_READY=$(kubectl get pod test-backoffice-bff -n "$NS" -o jsonpath='{.status.phase}' 2>/dev/null || echo "")
-if [ "$BOFFBFF_READY" == "Running" ]; then
+BOFFBFF_READY=$(kubectl get pod test-backoffice-bff -n "$NS" -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' 2>/dev/null || echo "")
+if [ "$BOFFBFF_READY" == "True" ]; then
     log_test "ALLOW - backoffice-bff → tax"
     if test_access "test-backoffice-bff" "tax" "ALLOW"; then
         log_pass "backoffice-bff allowed to call tax"
@@ -499,8 +554,8 @@ fi
 # ============================================================
 log_header "AUTHORIZATION - DENY (Unauthorized Access)"
 
-UNAUTH_READY=$(kubectl get pod test-unauthorized -n "$NS" -o jsonpath='{.status.phase}' 2>/dev/null || echo "")
-if [ "$UNAUTH_READY" == "Running" ]; then
+UNAUTH_READY=$(kubectl get pod test-unauthorized -n "$NS" -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' 2>/dev/null || echo "")
+if [ "$UNAUTH_READY" == "True" ]; then
     log_test "DENY - unauthorized-client → product"
     if test_access "test-unauthorized" "product" "DENY"; then
         log_pass "unauthorized-client correctly denied (HTTP 403)"
@@ -531,8 +586,8 @@ fi
 # ============================================================
 log_header "AUTHORIZATION - DENY (Invalid Cross-Service Access)"
 
-ORDER_READY=$(kubectl get pod test-order-pod -n "$NS" -o jsonpath='{.status.phase}' 2>/dev/null || echo "")
-if [ "$ORDER_READY" == "Running" ]; then
+ORDER_READY=$(kubectl get pod test-order-pod -n "$NS" -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' 2>/dev/null || echo "")
+if [ "$ORDER_READY" == "True" ]; then
     log_test "DENY - order → media (not in allow-list)"
     if test_access "test-order-pod" "media" "DENY"; then
         log_pass "order correctly denied access to media"
@@ -551,8 +606,8 @@ else
     log_skip "test-order-pod not ready"
 fi
 
-SEARCH_READY=$(kubectl get pod test-search-pod -n "$NS" -o jsonpath='{.status.phase}' 2>/dev/null || echo "")
-if [ "$SEARCH_READY" == "Running" ]; then
+SEARCH_READY=$(kubectl get pod test-search-pod -n "$NS" -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' 2>/dev/null || echo "")
+if [ "$SEARCH_READY" == "True" ]; then
     log_test "DENY - search → tax (not allowed)"
     if test_access "test-search-pod" "tax" "DENY"; then
         log_pass "search correctly denied access to tax"
@@ -571,8 +626,8 @@ else
     log_skip "test-search-pod not ready"
 fi
 
-CART_READY=$(kubectl get pod test-cart-pod -n "$NS" -o jsonpath='{.status.phase}' 2>/dev/null || echo "")
-if [ "$CART_READY" == "Running" ]; then
+CART_READY=$(kubectl get pod test-cart-pod -n "$NS" -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' 2>/dev/null || echo "")
+if [ "$CART_READY" == "True" ]; then
     log_test "DENY - cart → customer (not in allow-list)"
     if test_access "test-cart-pod" "customer" "DENY"; then
         log_pass "cart correctly denied access to customer"
@@ -601,7 +656,7 @@ UNDEPLOYED_SERVICES=("payment" "location" "promotion" "rating" "recommendation" 
 for svc in "${UNDEPLOYED_SERVICES[@]}"; do
     log_test "Service unavailable - $svc (not deployed)"
     
-    if [ "$UNAUTH_READY" == "Running" ]; then
+    if [ "$UNAUTH_READY" == "True" ]; then
         RAW_CODE=$(kubectl exec -n "$NS" test-unauthorized -- \
             curl -s -o /dev/null -w "%{http_code}" \
             --connect-timeout 3 --max-time 5 \
