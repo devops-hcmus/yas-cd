@@ -127,6 +127,34 @@ if ! kubectl get namespace "$NS" &>/dev/null; then
     exit 1
 fi
 
+# Pre-flight checks
+echo ""
+echo -e "${CYAN}Pre-flight Checks:${NC}"
+
+# Check if istio-system namespace exists
+if kubectl get namespace istio-system &>/dev/null; then
+    echo "  ✓ Istio system namespace found"
+else
+    echo "  ✗ Istio system namespace not found - Service mesh may not be installed"
+    exit 1
+fi
+
+# Check if Istio injection is enabled
+INJECTION_LABEL=$(kubectl get namespace "$NS" -o jsonpath='{.metadata.labels.istio-injection}' 2>/dev/null || echo "")
+if [ "$INJECTION_LABEL" == "enabled" ]; then
+    echo "  ✓ Istio injection enabled in namespace"
+else
+    echo "  ⚠️  Istio injection not enabled - test pods may not get sidecars"
+fi
+
+# Check if kubectl is connected
+if kubectl cluster-info &>/dev/null; then
+    echo "  ✓ Kubectl connected to cluster"
+else
+    echo "  ✗ Kubectl connection failed"
+    exit 1
+fi
+
 log_header "SERVICE MESH COMPREHENSIVE TEST SUITE"
 echo -e "  Namespace : ${NS}"
 echo -e "  Timestamp : $(date '+%Y-%m-%d %H:%M:%S')"
@@ -264,10 +292,26 @@ echo -e "  Cleaning up old test pods..."
 kubectl delete pods -n "$NS" -l purpose=authorization-testing --ignore-not-found=true 2>/dev/null || true
 sleep 2
 
+echo -e "  Creating required service accounts..."
+# Create service accounts if they don't exist
+for sa in storefront-bff backoffice-bff order search cart; do
+    kubectl get serviceaccount "$sa" -n "$NS" 2>/dev/null || \
+        kubectl create serviceaccount "$sa" -n "$NS" 2>/dev/null || true
+done
+
 echo -e "  Creating test pods with various service accounts..."
 
 # Deploy comprehensive test pods
-cat <<'TESTPODS' | sed "s/\$NS/$NS/g" | kubectl apply -f - 2>/dev/null || echo "Warning: Some test pods may not have deployed"
+APPLY_OUTPUT=$(cat <<'TESTPODS' | sed "s/\$NS/$NS/g" | kubectl apply -f - 2>&1)
+APPLY_RC=$?
+
+if [ $APPLY_RC -ne 0 ]; then
+    echo "  ⚠️  Warning: kubectl apply returned code $APPLY_RC"
+    echo "  Output: $APPLY_OUTPUT"
+else
+    echo "  ✓ Pods deployed successfully"
+fi
+
 ---
 # Test pod: storefront-bff (allowed to call: product, cart, order, customer, inventory, media, search)
 apiVersion: v1
@@ -408,6 +452,14 @@ TESTPODS
 
 echo -e "  Waiting for test pods to be ready (with sidecar injection)..."
 
+# Check if pods were created
+sleep 1
+POD_COUNT=$(kubectl get pods -n "$NS" -l purpose=authorization-testing --no-headers 2>/dev/null | wc -l)
+echo "  Pods created: $POD_COUNT/6"
+if [ "$POD_COUNT" -lt 6 ]; then
+    echo -e "  ${YELLOW}⚠️  WARNING: Some test pods may have failed to create${NC}"
+fi
+
 wait_for_pod_ready() {
     local pod=$1
     local ns=$2
@@ -426,20 +478,47 @@ wait_for_pod_ready() {
             if [ "$ready" == "True" ]; then
                 echo "      ✓ $pod is ready"
                 return 0
+            else
+                # Pod is running but not ready, show container status
+                local container_info
+                container_info=$(kubectl get pod "$pod" -n "$ns" -o jsonpath='{.status.containerStatuses[*].name}{"="}{.status.containerStatuses[*].ready}' 2>/dev/null || echo "unknown")
+                if [ $elapsed -eq 0 ] || [ $((elapsed % 30)) -eq 0 ]; then
+                    echo "      ⏳ $pod: Running but not Ready - Containers: $container_info (waited ${elapsed}s/${timeout}s)"
+                fi
             fi
+        else
+            echo "      ⏳ $pod: $status (waited ${elapsed}s/${timeout}s)"
         fi
         
-        echo "      ⏳ $pod: $status (waited ${elapsed}s/${timeout}s)"
         sleep $interval
         elapsed=$((elapsed + interval))
     done
     
     # Pod didn't get ready, show diagnostics
-    echo "      ✗ $pod failed to become ready"
+    echo "      ✗ $pod failed to become ready after ${timeout}s"
+    
+    # Check if pod exists
+    local pod_exists
+    pod_exists=$(kubectl get pod "$pod" -n "$ns" 2>/dev/null || echo "")
+    if [ -z "$pod_exists" ]; then
+        echo "        Pod not found in cluster"
+        return 1
+    fi
+    
+    # Show pod details
+    echo "        Pod Status:"
+    kubectl get pod "$pod" -n "$ns" -o wide 2>/dev/null | tail -1 | sed 's/^/          /'
+    
+    # Show container status
+    echo "        Container Status:"
+    kubectl get pod "$pod" -n "$ns" -o jsonpath='{.status.containerStatuses[*].name}{"\t"}{.status.containerStatuses[*].state}{"\n"}' 2>/dev/null | sed 's/^/          /'
+    
+    # Show recent events
     local events
-    events=$(kubectl describe pod "$pod" -n "$ns" 2>/dev/null | grep -A 5 "Events:" || echo "No events found")
+    events=$(kubectl describe pod "$pod" -n "$ns" 2>/dev/null | grep -A 10 "Events:" || echo "No events found")
     if [ -n "$events" ]; then
-        echo "        Last events: $events"
+        echo "        Recent Events:"
+        echo "$events" | sed 's/^/          /'
     fi
     return 1
 }
@@ -453,6 +532,19 @@ for pod in test-storefront-bff test-backoffice-bff test-order-pod test-search-po
 done
 
 echo -e "\n  Pod Status: ${PODS_READY}/6 pods ready"
+
+# Show summary of all test pods
+echo -e "\n  Summary of test pods:"
+kubectl get pods -n "$NS" -l purpose=authorization-testing -o wide 2>/dev/null || echo "  No test pods found"
+
+if [ "$PODS_READY" -lt 6 ]; then
+    echo -e "\n  ${YELLOW}⚠️  WARNING: Not all test pods are ready. Remaining tests will be skipped.${NC}"
+    echo "  To troubleshoot:"
+    echo "    kubectl describe pod <pod-name> -n $NS"
+    echo "    kubectl logs <pod-name> -n $NS"
+    echo "    kubectl get events -n $NS --sort-by='.lastTimestamp'"
+fi
+
 sleep 2
 
 # ============================================================
