@@ -1,0 +1,12 @@
+{{- range .Values.dashboards }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-{{ .name }}
+  labels:
+    {{- include "grafana.labels" $ | nindent 4 }}
+data:
+  json: |-
+{{ $.Files.Get (printf "dashboards/%s" .file) | indent 4 }}
+{{- end }}

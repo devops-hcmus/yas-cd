@@ -68,7 +68,7 @@ services:
     extra_hosts: [ 'host.docker.internal:host-gateway' ]
     volumes:
       - ./docker/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
-      - ./docker/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./k8s/deploy/observability/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
     environment:
       - GF_AUTH_ANONYMOUS_ENABLED=true
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin

@@ -6,3 +6,11 @@ postgresql:
   url: postgresql.postgres:5432
   username: yasadminuser
   password: admin
+# Same JSON files as docker-compose (k8s/deploy/observability/grafana/dashboards/)
+dashboards:
+  - name: observability-dashboard
+    file: observability_dashboard.json
+    folder: OpenTelemetry
+  - name: opentelemetry-collector
+    file: opentelemetry-collector.json
+    folder: OpenTelemetry
